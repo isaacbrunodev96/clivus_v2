@@ -90,9 +90,46 @@ class DashboardController extends Controller
         }
 
         // Estatísticas financeiras
-        $accounts = Account::where('user_id', $user->id)->get();
+        $accounts = Account::where('user_id', $user->id)->where('active', true)->get();
         $totalAccounts = $accounts->count();
         $totalBalance = $accounts->sum('balance');
+
+        // Separar saldo por PF e PJ baseado nas contas a pagar/receber
+        // Calcular valores pendentes por tipo
+        $payablesPF = Payable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->where('type', 'Pessoa Física (PF)')
+            ->sum('amount');
+        $payablesPJ = Payable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->where('type', 'Pessoa Jurídica (PJ)')
+            ->sum('amount');
+        
+        $receivablesPF = Receivable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->where('type', 'Pessoa Física (PF)')
+            ->sum('amount');
+        $receivablesPJ = Receivable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->where('type', 'Pessoa Jurídica (PJ)')
+            ->sum('amount');
+        
+        // Calcular saldo líquido por tipo (saldo das contas + receber - pagar)
+        // Distribuir saldo total proporcionalmente baseado nas operações
+        $totalOperationsPF = $receivablesPF + $payablesPF;
+        $totalOperationsPJ = $receivablesPJ + $payablesPJ;
+        $totalOperations = $totalOperationsPF + $totalOperationsPJ;
+        
+        if ($totalOperations > 0) {
+            $pfRatio = $totalOperationsPF / $totalOperations;
+            $pjRatio = $totalOperationsPJ / $totalOperations;
+        } else {
+            $pfRatio = 0.5;
+            $pjRatio = 0.5;
+        }
+        
+        $balancePF = $totalBalance * $pfRatio;
+        $balancePJ = $totalBalance * $pjRatio;
 
         // Transações do mês atual
         $currentMonth = now()->startOfMonth();
@@ -100,22 +137,56 @@ class DashboardController extends Controller
             ->where('date', '>=', $currentMonth)
             ->get();
         
-        $monthlyRevenue = $transactions->where('type', 'revenue')->sum('amount');
-        $monthlyExpenses = $transactions->where('type', 'expense')->sum('amount');
+        $monthlyRevenue = $transactions->where('type', 'receita')->sum('amount');
+        $monthlyExpenses = $transactions->where('type', 'despesa')->sum('amount');
         $monthlyBalance = $monthlyRevenue - $monthlyExpenses;
 
         // Contas a pagar e receber
         $payables = Payable::where('user_id', $user->id)
             ->where('status', 'pending')
             ->get();
-        $totalPayables = $payables->sum('total_value');
-        $overduePayables = $payables->where('due_date', '<', now())->sum('total_value');
+        $totalPayables = $payables->sum('amount');
+        $overduePayables = $payables->where('due_date', '<', now())->sum('amount');
 
         $receivables = Receivable::where('user_id', $user->id)
             ->where('status', 'pending')
             ->get();
-        $totalReceivables = $receivables->sum('total_value');
-        $overdueReceivables = $receivables->where('due_date', '<', now())->sum('total_value');
+        $totalReceivables = $receivables->sum('amount');
+        $overdueReceivables = $receivables->where('due_date', '<', now())->sum('amount');
+
+        // Próximas contas a pagar (7 dias)
+        $next7Days = now()->addDays(7);
+        $upcomingPayables = Payable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [now(), $next7Days])
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Próximas contas a receber (7 dias)
+        $upcomingReceivables = Receivable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [now(), $next7Days])
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // A Receber e A Pagar (30 dias)
+        $next30Days = now()->addDays(30);
+        $receivables30d = Receivable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [now(), $next30Days])
+            ->get();
+        $totalReceivables30d = $receivables30d->sum('amount');
+        $countReceivables30d = $receivables30d->count();
+
+        $payables30d = Payable::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [now(), $next30Days])
+            ->get();
+        $totalPayables30d = $payables30d->sum('amount');
+        $countPayables30d = $payables30d->count();
+
+        // Resultado Projetado (mês atual)
+        $projectedResult = $monthlyRevenue - $monthlyExpenses + $totalReceivables30d - $totalPayables30d;
 
         // Contatos
         $totalContacts = Contact::where('user_id', $user->id)->count();
@@ -139,10 +210,39 @@ class DashboardController extends Controller
 
         // Transações recentes
         $recentTransactions = Transaction::where('user_id', $user->id)
-            ->with('account', 'category')
+            ->with('account')
             ->latest('date')
             ->take(10)
             ->get();
+
+        // Timeline Financeira - últimos 30 dias por dia
+        $timelineStart = now()->subDays(30);
+        $timelineEnd = now();
+        $timelineData = [];
+        $accumulatedBalance = $totalBalance;
+        
+        for ($date = $timelineStart->copy(); $date->lte($timelineEnd); $date->addDay()) {
+            $dayRevenue = Transaction::where('user_id', $user->id)
+                ->where('type', 'receita')
+                ->whereDate('date', $date->format('Y-m-d'))
+                ->sum('amount');
+            
+            $dayExpense = Transaction::where('user_id', $user->id)
+                ->where('type', 'despesa')
+                ->whereDate('date', $date->format('Y-m-d'))
+                ->sum('amount');
+            
+            $dayBalance = $dayRevenue - $dayExpense;
+            $accumulatedBalance += $dayBalance;
+            
+            $timelineData[] = [
+                'date' => $date->format('d/m/Y'),
+                'dateShort' => $date->format('d/m'),
+                'revenue' => $dayRevenue,
+                'expense' => $dayExpense,
+                'balance' => $accumulatedBalance,
+            ];
+        }
 
         // Gráfico de receitas vs despesas (últimos 6 meses)
         $monthlyData = [];
@@ -152,21 +252,102 @@ class DashboardController extends Controller
             $monthEnd = $month->copy()->endOfMonth();
             
             $revenue = Transaction::where('user_id', $user->id)
-                ->where('type', 'revenue')
+                ->where('type', 'receita')
                 ->whereBetween('date', [$monthStart, $monthEnd])
                 ->sum('amount');
             
             $expense = Transaction::where('user_id', $user->id)
-                ->where('type', 'expense')
+                ->where('type', 'despesa')
                 ->whereBetween('date', [$monthStart, $monthEnd])
                 ->sum('amount');
             
             $monthlyData[] = [
                 'month' => $month->format('M/Y'),
+                'monthShort' => $month->format('M'),
                 'revenue' => $revenue,
                 'expense' => $expense,
             ];
         }
+
+        // Distribuição por método de pagamento (últimos 30 dias)
+        $paymentMethodData = Transaction::where('user_id', $user->id)
+            ->where('date', '>=', now()->subDays(30))
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'method' => $item->payment_method ?: 'Não informado',
+                    'total' => (float) $item->total
+                ];
+            })
+            ->filter(fn($item) => $item['total'] > 0)
+            ->values();
+
+        // Distribuição por conta (últimos 30 dias)
+        $accountDistributionData = Transaction::where('user_id', $user->id)
+            ->where('date', '>=', now()->subDays(30))
+            ->with('account')
+            ->get()
+            ->groupBy('account_id')
+            ->map(function($transactions, $accountId) {
+                $account = $transactions->first()->account;
+                return [
+                    'account' => $account ? $account->name : 'Sem conta',
+                    'total' => $transactions->sum('amount')
+                ];
+            })
+            ->filter(fn($item) => $item['total'] > 0)
+            ->values();
+
+        // Dados de saldo acumulado para gráfico de área
+        $accumulatedBalanceData = [];
+        $runningBalance = $totalBalance;
+        for ($i = 29; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $dayTransactions = Transaction::where('user_id', $user->id)
+                ->whereDate('date', $date->format('Y-m-d'))
+                ->get();
+            
+            $dayChange = $dayTransactions->sum(function($t) {
+                return $t->type === 'receita' ? $t->amount : -$t->amount;
+            });
+            
+            $runningBalance += $dayChange;
+            
+            $accumulatedBalanceData[] = [
+                'date' => $date->format('d/m'),
+                'balance' => $runningBalance
+            ];
+        }
+
+        // Comparação PF vs PJ (últimos 30 dias) - usando Payables e Receivables
+        $pfPjComparison = [
+            'pf' => [
+                'receita' => Receivable::where('user_id', $user->id)
+                    ->where('type', 'Pessoa Física (PF)')
+                    ->where('due_date', '>=', now()->subDays(30))
+                    ->where('status', 'paid')
+                    ->sum('amount'),
+                'despesa' => Payable::where('user_id', $user->id)
+                    ->where('type', 'Pessoa Física (PF)')
+                    ->where('due_date', '>=', now()->subDays(30))
+                    ->where('status', 'paid')
+                    ->sum('amount'),
+            ],
+            'pj' => [
+                'receita' => Receivable::where('user_id', $user->id)
+                    ->where('type', 'Pessoa Jurídica (PJ)')
+                    ->where('due_date', '>=', now()->subDays(30))
+                    ->where('status', 'paid')
+                    ->sum('amount'),
+                'despesa' => Payable::where('user_id', $user->id)
+                    ->where('type', 'Pessoa Jurídica (PJ)')
+                    ->where('due_date', '>=', now()->subDays(30))
+                    ->where('status', 'paid')
+                    ->sum('amount'),
+            ]
+        ];
 
         // Assinatura
         $subscription = $user->activeSubscription();
@@ -175,6 +356,8 @@ class DashboardController extends Controller
         return view('dashboard.index', compact(
             'totalAccounts',
             'totalBalance',
+            'balancePF',
+            'balancePJ',
             'monthlyRevenue',
             'monthlyExpenses',
             'monthlyBalance',
@@ -182,11 +365,23 @@ class DashboardController extends Controller
             'overduePayables',
             'totalReceivables',
             'overdueReceivables',
+            'upcomingPayables',
+            'upcomingReceivables',
+            'totalReceivables30d',
+            'countReceivables30d',
+            'totalPayables30d',
+            'countPayables30d',
+            'projectedResult',
             'totalContacts',
             'totalGoals',
             'goalsProgress',
             'recentTransactions',
             'monthlyData',
+            'timelineData',
+            'paymentMethodData',
+            'accountDistributionData',
+            'accumulatedBalanceData',
+            'pfPjComparison',
             'subscription',
             'plan'
         ));

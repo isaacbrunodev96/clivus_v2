@@ -5,108 +5,282 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Cards de Estatísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="rounded-xl p-6" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark))); color: white; box-shadow: 0 4px 15px -3px rgba(var(--primary), 0.4);">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium opacity-90">Saldo Total</h3>
-                <svg class="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+    <!-- Visão Geral Financeira -->
+    <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold mb-1">Visão Geral Financeira</h2>
+                <p class="text-sm" style="color: rgb(var(--text-secondary));">Acompanhe rapidamente a saúde financeira do seu negócio</p>
             </div>
-            <p class="text-3xl font-bold">R$ {{ number_format($totalBalance, 2, ',', '.') }}</p>
-            <p class="text-xs opacity-75 mt-2">{{ $totalAccounts }} {{ $totalAccounts == 1 ? 'conta' : 'contas' }}</p>
         </div>
 
-        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium" style="color: rgb(var(--text-secondary));">Receitas do Mês</h3>
-                <svg class="w-6 h-6" style="color: rgb(34, 197, 94);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Saldo de Caixa -->
+            <div class="rounded-lg p-5" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark))); color: white;">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium opacity-90">Saldo de Caixa</h3>
+                    <svg class="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold mb-2">R$ {{ number_format($totalBalance, 2, ',', '.') }}</p>
+                <div class="text-xs opacity-75 space-y-1">
+                    <p>PF: R$ {{ number_format($balancePF, 2, ',', '.') }}</p>
+                    <p>PJ: R$ {{ number_format($balancePJ, 2, ',', '.') }}</p>
+                </div>
             </div>
-            <p class="text-3xl font-bold" style="color: rgb(34, 197, 94);">R$ {{ number_format($monthlyRevenue, 2, ',', '.') }}</p>
-        </div>
 
-        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium" style="color: rgb(var(--text-secondary));">Despesas do Mês</h3>
-                <svg class="w-6 h-6" style="color: rgb(239, 68, 68);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
-                </svg>
+            <!-- A Receber (30d) -->
+            <div class="rounded-lg p-5" style="background-color: rgb(var(--bg-secondary)); border: 1px solid rgb(var(--border));">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium" style="color: rgb(var(--text-secondary));">A Receber (30d)</h3>
+                    <svg class="w-6 h-6" style="color: rgb(34, 197, 94);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold mb-2" style="color: rgb(34, 197, 94);">R$ {{ number_format($totalReceivables30d, 2, ',', '.') }}</p>
+                <p class="text-xs" style="color: rgb(var(--text-secondary));">{{ $countReceivables30d }} {{ $countReceivables30d == 1 ? 'título pendente' : 'títulos pendentes' }}</p>
             </div>
-            <p class="text-3xl font-bold" style="color: rgb(239, 68, 68);">R$ {{ number_format($monthlyExpenses, 2, ',', '.') }}</p>
-        </div>
 
-        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium" style="color: rgb(var(--text-secondary));">Saldo do Mês</h3>
-                <svg class="w-6 h-6" style="color: rgb(var(--primary));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
+            <!-- A Pagar (30d) -->
+            <div class="rounded-lg p-5" style="background-color: rgb(var(--bg-secondary)); border: 1px solid rgb(var(--border));">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium" style="color: rgb(var(--text-secondary));">A Pagar (30d)</h3>
+                    <svg class="w-6 h-6" style="color: rgb(239, 68, 68);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold mb-2" style="color: rgb(239, 68, 68);">R$ {{ number_format($totalPayables30d, 2, ',', '.') }}</p>
+                <p class="text-xs" style="color: rgb(var(--text-secondary));">{{ $countPayables30d }} {{ $countPayables30d == 1 ? 'título pendente' : 'títulos pendentes' }}</p>
             </div>
-            <p class="text-3xl font-bold" style="color: {{ $monthlyBalance >= 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)' }};">R$ {{ number_format($monthlyBalance, 2, ',', '.') }}</p>
+
+            <!-- Resultado Projetado -->
+            <div class="rounded-lg p-5" style="background-color: rgb(var(--bg-secondary)); border: 1px solid rgb(var(--border));">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium" style="color: rgb(var(--text-secondary));">Resultado Projetado</h3>
+                    <svg class="w-6 h-6" style="color: rgb(var(--primary));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold mb-2" style="color: {{ $projectedResult >= 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)' }};">R$ {{ number_format($projectedResult, 2, ',', '.') }}</p>
+                <p class="text-xs" style="color: rgb(var(--text-secondary));">Projeção mês atual</p>
+            </div>
         </div>
     </div>
 
-    <!-- Contas a Pagar e Receber -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Grid de Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Timeline Financeira - Linha Fina -->
         <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
-            <h3 class="text-lg font-bold mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2" style="color: rgb(239, 68, 68);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Contas a Pagar
-            </h3>
-            <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm" style="color: rgb(var(--text-secondary));">Total Pendente</span>
-                    <span class="text-lg font-bold">R$ {{ number_format($totalPayables, 2, ',', '.') }}</span>
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Timeline Financeira</h2>
+                    <p class="text-xs" style="color: rgb(var(--text-secondary));">Receitas e despesas diárias (30 dias)</p>
                 </div>
-                @if($overduePayables > 0)
-                <div class="flex justify-between items-center p-2 rounded-lg" style="background-color: rgba(239, 68, 68, 0.1);">
-                    <span class="text-sm" style="color: rgb(239, 68, 68);">Vencidas</span>
-                    <span class="text-sm font-bold" style="color: rgb(239, 68, 68);">R$ {{ number_format($overduePayables, 2, ',', '.') }}</span>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: rgb(34, 197, 94);"></div>
+                        <span class="text-xs" style="color: rgb(var(--text-secondary));">Receitas</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: rgb(239, 68, 68);"></div>
+                        <span class="text-xs" style="color: rgb(var(--text-secondary));">Despesas</span>
+                    </div>
                 </div>
-                @endif
+            </div>
+            <div style="height: 300px;">
+                <canvas id="timelineChart"></canvas>
             </div>
         </div>
 
+        <!-- Saldo Acumulado - Área -->
         <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
-            <h3 class="text-lg font-bold mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2" style="color: rgb(34, 197, 94);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Contas a Receber
-            </h3>
-            <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm" style="color: rgb(var(--text-secondary));">Total Pendente</span>
-                    <span class="text-lg font-bold">R$ {{ number_format($totalReceivables, 2, ',', '.') }}</span>
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Saldo Acumulado</h2>
+                    <p class="text-xs" style="color: rgb(var(--text-secondary));">Evolução do saldo (30 dias)</p>
                 </div>
-                @if($overdueReceivables > 0)
-                <div class="flex justify-between items-center p-2 rounded-lg" style="background-color: rgba(239, 68, 68, 0.1);">
-                    <span class="text-sm" style="color: rgb(239, 68, 68);">Vencidas</span>
-                    <span class="text-sm font-bold" style="color: rgb(239, 68, 68);">R$ {{ number_format($overdueReceivables, 2, ',', '.') }}</span>
-                </div>
-                @endif
             </div>
+            <div style="height: 300px;">
+                <canvas id="balanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Comparação Mensal - Barras -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Comparação Mensal</h2>
+                    <p class="text-xs" style="color: rgb(var(--text-secondary));">Receitas vs Despesas (6 meses)</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded" style="background-color: rgb(34, 197, 94);"></div>
+                        <span class="text-xs" style="color: rgb(var(--text-secondary));">Receitas</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded" style="background-color: rgb(239, 68, 68);"></div>
+                        <span class="text-xs" style="color: rgb(var(--text-secondary));">Despesas</span>
+                    </div>
+                </div>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- PF vs PJ - Barras Agrupadas -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">PF vs PJ</h2>
+                    <p class="text-xs" style="color: rgb(var(--text-secondary));">Comparação (30 dias)</p>
+                </div>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="pfPjChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Gráficos Circulares -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Métodos de Pagamento - Pizza -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Métodos de Pagamento</h2>
+                    <p class="text-xs" style="color: rgb(var(--text-secondary));">Distribuição (30 dias)</p>
+                </div>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="paymentMethodChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Distribuição por Conta - Rosca -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Distribuição por Conta</h2>
+                    <p class="text-xs" style="color: rgb(var(--text-secondary));">Transações (30 dias)</p>
+                </div>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="accountChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Informações -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Próximas Contas a Pagar -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-bold flex items-center">
+                        <svg class="w-5 h-5 mr-2" style="color: rgb(239, 68, 68);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Próximas Contas a Pagar
+                    </h3>
+                    <p class="text-xs mt-1" style="color: rgb(var(--text-secondary));">Vencimentos nos próximos 7 dias</p>
+                </div>
+                <a href="{{ route('finance.payables.index') }}" class="text-sm font-medium" style="color: rgb(var(--primary));">Ver todas</a>
+            </div>
+            @if($upcomingPayables->count() > 0)
+            <div class="space-y-3">
+                @foreach($upcomingPayables->take(5) as $payable)
+                <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: rgb(var(--bg-secondary)); border: 1px solid rgb(var(--border));">
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">{{ $payable->description }}</p>
+                        <p class="text-xs mt-1" style="color: rgb(var(--text-secondary));">
+                            Vence em {{ $payable->due_date->format('d/m/Y') }}
+                            @if($payable->due_date->isPast())
+                                <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.1); color: rgb(239, 68, 68);">Vencida</span>
+                            @elseif($payable->due_date->isToday())
+                                <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium" style="background-color: rgba(251, 191, 36, 0.1); color: rgb(251, 191, 36);">Hoje</span>
+                            @endif
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold" style="color: rgb(239, 68, 68);">R$ {{ number_format($payable->amount, 2, ',', '.') }}</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="text-center py-8">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" style="color: rgb(var(--text-secondary));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-sm" style="color: rgb(var(--text-secondary));">Nenhuma conta a pagar</p>
+            </div>
+            @endif
+        </div>
+
+        <!-- Próximas Contas a Receber -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-bold flex items-center">
+                        <svg class="w-5 h-5 mr-2" style="color: rgb(34, 197, 94);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Próximas Contas a Receber
+                    </h3>
+                    <p class="text-xs mt-1" style="color: rgb(var(--text-secondary));">Vencimentos nos próximos 7 dias</p>
+                </div>
+                <a href="{{ route('finance.receivables.index') }}" class="text-sm font-medium" style="color: rgb(var(--primary));">Ver todas</a>
+            </div>
+            @if($upcomingReceivables->count() > 0)
+            <div class="space-y-3">
+                @foreach($upcomingReceivables->take(5) as $receivable)
+                <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: rgb(var(--bg-secondary)); border: 1px solid rgb(var(--border));">
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">{{ $receivable->description }}</p>
+                        <p class="text-xs mt-1" style="color: rgb(var(--text-secondary));">
+                            Vence em {{ $receivable->due_date->format('d/m/Y') }}
+                            @if($receivable->due_date->isPast())
+                                <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.1); color: rgb(239, 68, 68);">Vencida</span>
+                            @elseif($receivable->due_date->isToday())
+                                <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium" style="background-color: rgba(251, 191, 36, 0.1); color: rgb(251, 191, 36);">Hoje</span>
+                            @endif
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold" style="color: rgb(34, 197, 94);">R$ {{ number_format($receivable->amount, 2, ',', '.') }}</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="text-center py-8">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" style="color: rgb(var(--text-secondary));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-sm" style="color: rgb(var(--text-secondary));">Nenhuma conta a receber</p>
+            </div>
+            @endif
         </div>
     </div>
 
     <!-- Metas Financeiras -->
-    @if($totalGoals > 0)
     <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
-        <h3 class="text-lg font-bold mb-4">Metas Financeiras</h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Metas Financeiras</h3>
+            <a href="{{ route('finance.planning.index') }}" class="text-sm font-medium" style="color: rgb(var(--primary));">Gerenciar</a>
+        </div>
+        @if($totalGoals > 0)
         <div class="space-y-4">
             @foreach($goalsProgress as $goal)
             <div>
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm font-medium">{{ $goal['name'] }}</span>
-                    <span class="text-sm" style="color: rgb(var(--text-secondary));">{{ number_format($goal['progress'], 1) }}%</span>
+                    <span class="text-sm font-bold" style="color: rgb(var(--primary));">{{ number_format($goal['progress'], 1) }}%</span>
                 </div>
-                <div class="w-full h-2 rounded-full" style="background-color: rgb(var(--bg-secondary));">
-                    <div class="h-2 rounded-full transition-all" style="background: linear-gradient(90deg, rgb(var(--primary)), rgb(var(--primary-dark))); width: {{ min(100, $goal['progress']) }}%;"></div>
+                <div class="w-full h-3 rounded-full" style="background-color: rgb(var(--bg-secondary));">
+                    <div class="h-3 rounded-full transition-all duration-500" style="background: linear-gradient(90deg, rgb(var(--primary)), rgb(var(--primary-dark))); width: {{ min(100, $goal['progress']) }}%;"></div>
                 </div>
                 <div class="flex justify-between text-xs mt-1" style="color: rgb(var(--text-secondary));">
                     <span>R$ {{ number_format($goal['current'], 2, ',', '.') }}</span>
@@ -115,8 +289,15 @@
             </div>
             @endforeach
         </div>
+        @else
+        <div class="text-center py-8">
+            <svg class="w-16 h-16 mx-auto mb-4 opacity-50" style="color: rgb(var(--text-secondary));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <p class="text-sm" style="color: rgb(var(--text-secondary));">Nenhuma meta cadastrada</p>
+        </div>
+        @endif
     </div>
-    @endif
 
     <!-- Transações Recentes -->
     <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
@@ -129,20 +310,20 @@
             <table class="w-full">
                 <thead>
                     <tr style="border-bottom: 1px solid rgb(var(--border));">
-                        <th class="text-left py-2 text-sm font-medium" style="color: rgb(var(--text-secondary));">Data</th>
-                        <th class="text-left py-2 text-sm font-medium" style="color: rgb(var(--text-secondary));">Descrição</th>
-                        <th class="text-left py-2 text-sm font-medium" style="color: rgb(var(--text-secondary));">Conta</th>
-                        <th class="text-right py-2 text-sm font-medium" style="color: rgb(var(--text-secondary));">Valor</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Data</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Descrição</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Conta</th>
+                        <th class="text-right py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Valor</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($recentTransactions as $transaction)
-                    <tr style="border-bottom: 1px solid rgb(var(--border));">
-                        <td class="py-3 text-sm">{{ $transaction->date->format('d/m/Y') }}</td>
-                        <td class="py-3 text-sm">{{ $transaction->description }}</td>
-                        <td class="py-3 text-sm">{{ $transaction->account->name ?? '-' }}</td>
-                        <td class="py-3 text-sm text-right font-medium" style="color: {{ $transaction->type === 'revenue' ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)' }};">
-                            {{ $transaction->type === 'revenue' ? '+' : '-' }} R$ {{ number_format($transaction->amount, 2, ',', '.') }}
+                    <tr style="border-bottom: 1px solid rgb(var(--border));" class="hover:bg-opacity-50" style="background-color: rgba(var(--primary), 0.02);">
+                        <td class="py-3 px-4 text-sm">{{ $transaction->date->format('d/m/Y') }}</td>
+                        <td class="py-3 px-4 text-sm">{{ $transaction->description }}</td>
+                        <td class="py-3 px-4 text-sm">{{ $transaction->account->name ?? '-' }}</td>
+                        <td class="py-3 px-4 text-sm text-right font-medium" style="color: {{ $transaction->type === 'receita' ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)' }};">
+                            {{ $transaction->type === 'receita' ? '+' : '-' }} R$ {{ number_format($transaction->amount, 2, ',', '.') }}
                         </td>
                     </tr>
                     @endforeach
@@ -156,23 +337,478 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+    // Configuração global para linhas finas
+    Chart.defaults.borderWidth = 1.5;
+    Chart.defaults.elements.line.borderWidth = 1.5;
+    Chart.defaults.elements.point.radius = 2.5;
+    Chart.defaults.elements.point.hoverRadius = 4;
+    Chart.defaults.elements.bar.borderWidth = 0;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.padding = 15;
+    Chart.defaults.plugins.legend.labels.font = { size: 11 };
+    Chart.defaults.plugins.tooltip.padding = 12;
+    Chart.defaults.plugins.tooltip.titleFont = { size: 12, weight: 'bold' };
+    Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+    Chart.defaults.plugins.tooltip.displayColors = true;
+    Chart.defaults.plugins.tooltip.boxPadding = 6;
+
+    const gridColor = 'rgba(128, 128, 128, 0.1)';
+    const textColor = 'rgb(128, 128, 128)';
+
+    // Timeline Financeira Chart - Linha Fina
+    const timelineCtx = document.getElementById('timelineChart');
+    if (timelineCtx) {
+        const timelineData = @json($timelineData);
+        
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: timelineData.map(d => d.dateShort),
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: timelineData.map(d => d.revenue),
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                        borderWidth: 1.5,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 3,
+                    },
+                    {
+                        label: 'Despesas',
+                        data: timelineData.map(d => d.expense),
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                        borderWidth: 1.5,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 3,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 },
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                            }
+                        },
+                        grid: {
+                            color: gridColor,
+                            lineWidth: 1
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 },
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    // Saldo Acumulado - Área
+    const balanceCtx = document.getElementById('balanceChart');
+    if (balanceCtx) {
+        const balanceData = @json($accumulatedBalanceData);
+        
+        new Chart(balanceCtx, {
+            type: 'line',
+            data: {
+                labels: balanceData.map(d => d.date),
+                datasets: [{
+                    label: 'Saldo',
+                    data: balanceData.map(d => d.balance),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Saldo: R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 },
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                            }
+                        },
+                        grid: {
+                            color: gridColor,
+                            lineWidth: 1
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 }
+                        },
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Comparação Mensal - Barras
+    const monthlyCtx = document.getElementById('monthlyChart');
+    if (monthlyCtx) {
+        const monthlyData = @json($monthlyData);
+        
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyData.map(d => d.monthShort),
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: monthlyData.map(d => d.revenue),
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Despesas',
+                        data: monthlyData.map(d => d.expense),
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 },
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                            }
+                        },
+                        grid: {
+                            color: gridColor,
+                            lineWidth: 1
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 }
+                        },
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // PF vs PJ - Barras Agrupadas
+    const pfPjCtx = document.getElementById('pfPjChart');
+    if (pfPjCtx) {
+        const pfPjData = @json($pfPjComparison);
+        
+        new Chart(pfPjCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Receitas', 'Despesas'],
+                datasets: [
+                    {
+                        label: 'Pessoa Física',
+                        data: [pfPjData.pf.receita, pfPjData.pf.despesa],
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderColor: 'rgb(139, 92, 246)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Pessoa Jurídica',
+                        data: [pfPjData.pj.receita, pfPjData.pj.despesa],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            font: { size: 11 },
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 },
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                            }
+                        },
+                        grid: {
+                            color: gridColor,
+                            lineWidth: 1
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: { size: 10 }
+                        },
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Métodos de Pagamento - Pizza
+    const paymentMethodCtx = document.getElementById('paymentMethodChart');
+    if (paymentMethodCtx) {
+        const paymentMethodData = @json($paymentMethodData);
+        const colors = [
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(251, 191, 36, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+        ];
+        
+        if (paymentMethodData && paymentMethodData.length > 0) {
+            new Chart(paymentMethodCtx, {
+            type: 'pie',
+            data: {
+                labels: paymentMethodData.map(d => d.method),
+                datasets: [{
+                    data: paymentMethodData.map(d => d.total),
+                    backgroundColor: colors.slice(0, paymentMethodData.length),
+                    borderWidth: 2,
+                    borderColor: 'rgb(var(--card))',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: textColor,
+                            font: { size: 11 },
+                            padding: 12,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+            });
+        } else {
+            paymentMethodCtx.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-sm" style="color: rgb(var(--text-secondary));">Nenhum dado disponível</div>';
+        }
+    }
+
+    // Distribuição por Conta - Rosca
+    const accountCtx = document.getElementById('accountChart');
+    if (accountCtx) {
+        const accountData = @json($accountDistributionData);
+        const colors = [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(251, 191, 36, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+        ];
+        
+        if (accountData && accountData.length > 0) {
+            new Chart(accountCtx, {
+            type: 'doughnut',
+            data: {
+                labels: accountData.map(d => d.account),
+                datasets: [{
+                    data: accountData.map(d => d.total),
+                    backgroundColor: colors.slice(0, accountData.length),
+                    borderWidth: 2,
+                    borderColor: 'rgb(var(--card))',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: textColor,
+                            font: { size: 11 },
+                            padding: 12,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+            });
+        } else {
+            accountCtx.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-sm" style="color: rgb(var(--text-secondary));">Nenhum dado disponível</div>';
+        }
+    }
+
     // Sistema de verificação automática de pagamentos pendentes
     (function() {
         let checkInterval = null;
         let checkCount = 0;
-        const maxChecks = 60; // Verificar por até 60 vezes (5 minutos com intervalo de 5 segundos)
-        const checkIntervalTime = 5000; // Verificar a cada 5 segundos
+        const maxChecks = 60;
+        const checkIntervalTime = 5000;
         
-        // Função para mostrar notificação
         function showNotification(message, type = 'success') {
-            // Remover notificações anteriores
             const existingNotification = document.getElementById('payment-notification');
             if (existingNotification) {
                 existingNotification.remove();
             }
             
-            // Criar nova notificação
             const notification = document.createElement('div');
             notification.id = 'payment-notification';
             notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300';
@@ -198,12 +834,10 @@
             
             document.body.appendChild(notification);
             
-            // Animar entrada
             setTimeout(() => {
                 notification.style.transform = 'translateX(0)';
             }, 10);
             
-            // Remover automaticamente após 10 segundos
             setTimeout(() => {
                 if (notification.parentElement) {
                     notification.style.transform = 'translateX(100%)';
@@ -212,11 +846,9 @@
             }, 10000);
         }
         
-        // Função para verificar pagamentos pendentes
         function checkPendingPayments() {
             checkCount++;
             
-            // Parar após máximo de verificações
             if (checkCount > maxChecks) {
                 if (checkInterval) {
                     clearInterval(checkInterval);
@@ -225,7 +857,6 @@
                 return;
             }
             
-            // Fazer requisição para verificar pagamentos pendentes
             fetch('{{ route("payment.pending.check") }}', {
                 method: 'GET',
                 headers: {
@@ -238,21 +869,17 @@
             .then(response => response.json())
             .then(data => {
                 if (data.updated && data.message) {
-                    // Pagamento foi confirmado!
                     showNotification(data.message, 'success');
                     
-                    // Parar verificação
                     if (checkInterval) {
                         clearInterval(checkInterval);
                         checkInterval = null;
                     }
                     
-                    // Recarregar página após 2 segundos para atualizar dados
                     setTimeout(() => {
                         window.location.reload();
                     }, 2000);
                 } else if (!data.has_pending) {
-                    // Não há mais pagamentos pendentes, parar verificação
                     if (checkInterval) {
                         clearInterval(checkInterval);
                         checkInterval = null;
@@ -261,19 +888,14 @@
             })
             .catch(error => {
                 console.error('Erro ao verificar pagamentos pendentes:', error);
-                // Continuar verificando mesmo em caso de erro
             });
         }
         
-        // Iniciar verificação apenas se estivermos na página do dashboard
-        // e se houver possibilidade de pagamentos pendentes
         function startPaymentCheck() {
-            // Verificar se já existe um intervalo rodando
             if (checkInterval) {
                 return;
             }
             
-            // Verificar inicialmente se há pagamentos pendentes
             fetch('{{ route("payment.pending.check") }}', {
                 method: 'GET',
                 headers: {
@@ -286,9 +908,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.has_pending) {
-                    // Há pagamentos pendentes, iniciar verificação periódica
                     checkInterval = setInterval(checkPendingPayments, checkIntervalTime);
-                    // Verificar imediatamente também
                     checkPendingPayments();
                 }
             })
@@ -297,21 +917,18 @@
             });
         }
         
-        // Iniciar verificação quando a página carregar
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', startPaymentCheck);
         } else {
             startPaymentCheck();
         }
         
-        // Também verificar quando a página recebe foco (usuário voltou de outra aba)
         window.addEventListener('focus', function() {
             if (!checkInterval) {
                 startPaymentCheck();
             }
         });
         
-        // Limpar intervalo quando a página for fechada
         window.addEventListener('beforeunload', function() {
             if (checkInterval) {
                 clearInterval(checkInterval);
@@ -321,4 +938,3 @@
 </script>
 @endpush
 @endsection
-
