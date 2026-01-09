@@ -34,6 +34,12 @@
                 Estamos verificando o status do seu pagamento. Você será redirecionado automaticamente quando for confirmado.
             </p>
             
+            <div class="mb-6 p-4 rounded-lg" style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+                <p class="text-sm" style="color: rgb(37, 99, 235);">
+                    <strong>💡 Dica:</strong> Se você já completou o pagamento no Asaas, pode clicar em "Ir para Dashboard" agora. O sistema detectará automaticamente quando o pagamento for confirmado e você receberá uma notificação.
+                </p>
+            </div>
+            
             <div class="space-y-2 mb-6">
                 <div class="flex items-center justify-center space-x-2">
                     <div class="w-2 h-2 rounded-full animate-pulse" style="background-color: rgb(var(--primary));"></div>
@@ -44,7 +50,9 @@
             <p class="text-sm mb-6" style="color: rgb(var(--text-secondary));">
                 Isso pode levar alguns segundos. Por favor, aguarde.
                 <br><br>
-                <strong>Dica:</strong> Você pode ir para o dashboard agora. O sistema verificará automaticamente quando o pagamento for confirmado.
+                <strong>Importante:</strong> Se você já completou o pagamento no Asaas e não foi redirecionado automaticamente, clique no botão abaixo para voltar ao sistema.
+                <br><br>
+                O sistema verificará automaticamente quando o pagamento for confirmado, mesmo se você estiver no dashboard.
             </p>
             
             <div class="space-y-3">

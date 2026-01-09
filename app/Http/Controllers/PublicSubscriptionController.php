@@ -106,7 +106,8 @@ class PublicSubscriptionController extends Controller
 
             // Criar assinatura no Asaas
             // URL de retorno após pagamento bem-sucedido - redirecionar para dashboard
-            $returnUrl = route('dashboard.index') . '?payment=success';
+            // Usar URL pública (ngrok em dev, APP_URL em produção)
+            $returnUrl = $this->getPublicUrl(route('dashboard.index') . '?payment=success');
             $subscriptionData = $this->asaasService->createSubscription([
                 'customer_id' => $user->asaas_customer_id,
                 'billing_type' => $validated['billing_type'],
@@ -153,6 +154,45 @@ class PublicSubscriptionController extends Controller
             
             // Buscar pagamentos da assinatura (o Asaas cria automaticamente)
             $paymentData = $this->asaasService->getSubscriptionPayments($subscriptionData['id']);
+            
+            // Se encontrou o pagamento, tentar adicionar callback para redirecionamento
+            // IMPORTANTE: Só tentar se a URL não for localhost (Asaas não aceita localhost)
+            if ($paymentData && isset($paymentData['id']) && 
+                !str_contains($returnUrl, 'localhost') && 
+                !str_contains($returnUrl, '127.0.0.1')) {
+                $paymentId = $paymentData['id'];
+                
+                // Tentar atualizar o pagamento para adicionar callback
+                // Isso só funciona se o pagamento ainda estiver PENDING
+                if (isset($paymentData['status']) && $paymentData['status'] === 'PENDING') {
+                    try {
+                        $updateData = [
+                            'callback' => [
+                                'successUrl' => $returnUrl,
+                                'autoRedirect' => true,
+                            ],
+                            'returnUrl' => $returnUrl,
+                        ];
+                        
+                        $updatedPayment = $this->asaasService->updatePayment($paymentId, $updateData);
+                        if ($updatedPayment) {
+                            Log::info('Callback adicionado ao pagamento criado automaticamente', [
+                                'payment_id' => $paymentId,
+                                'return_url' => $returnUrl,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Não foi possível adicionar callback ao pagamento', [
+                            'payment_id' => $paymentId,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            } else {
+                Log::info('Pulando atualização de callback - URL é localhost ou inválida', [
+                    'return_url' => $returnUrl,
+                ]);
+            }
             
             if ($paymentData && isset($paymentData['invoiceUrl'])) {
                 $paymentUrl = $paymentData['invoiceUrl'];
@@ -210,6 +250,26 @@ class PublicSubscriptionController extends Controller
                 ->withInput()
                 ->with('error', 'Erro ao processar cadastro: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Obter URL pública (ngrok em dev, APP_URL em produção)
+     */
+    private function getPublicUrl(string $path = ''): string
+    {
+        // Se houver URL pública configurada (ngrok), usar ela
+        $publicUrl = env('APP_PUBLIC_URL');
+        if ($publicUrl) {
+            $baseUrl = rtrim($publicUrl, '/');
+            $cleanPath = ltrim($path, '/');
+            return $baseUrl . ($cleanPath ? '/' . $cleanPath : '');
+        }
+        
+        // Caso contrário, usar APP_URL
+        $appUrl = config('app.url', env('APP_URL', 'http://localhost'));
+        $baseUrl = rtrim($appUrl, '/');
+        $cleanPath = ltrim($path, '/');
+        return $baseUrl . ($cleanPath ? '/' . $cleanPath : '');
     }
 
     /**

@@ -33,6 +33,7 @@ Route::get('payment/callback', [\App\Http\Controllers\SubscriptionController::cl
 Route::middleware(['auth'])->group(function () {
     Route::get('payment/waiting', [\App\Http\Controllers\PaymentStatusController::class, 'waiting'])->name('payment.waiting');
     Route::get('payment/status/check', [\App\Http\Controllers\PaymentStatusController::class, 'checkStatus'])->name('payment.status.check');
+    Route::get('payment/pending/check', [\App\Http\Controllers\PaymentStatusController::class, 'checkPending'])->name('payment.pending.check');
 });
 
 // Página pública de planos e cadastro

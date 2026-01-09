@@ -100,10 +100,11 @@ class ModuleStoreController extends Controller
         // Criar pagamento no Asaas
         try {
             // URL de retorno após pagamento - página de aguardando que verifica status
-            $returnUrl = route('payment.waiting', [
+            // Usar URL pública (ngrok em dev, APP_URL em produção)
+            $returnUrl = $this->getPublicUrl(route('payment.waiting', [
                 'module' => $module->id,
                 'payment_id' => null, // Será preenchido após criar o pagamento
-            ]);
+            ]));
             
             // Verificar se já existe um UserModule pendente para este módulo
             $existingUserModule = UserModule::where('user_id', $user->id)
@@ -292,5 +293,25 @@ class ModuleStoreController extends Controller
         // Se ainda não foi ativado, redirecionar para dashboard com mensagem informativa
         return redirect()->route('dashboard.index')
             ->with('info', 'Aguardando confirmação do pagamento. O módulo será ativado automaticamente quando o pagamento for confirmado.');
+    }
+
+    /**
+     * Obter URL pública (ngrok em dev, APP_URL em produção)
+     */
+    private function getPublicUrl(string $path = ''): string
+    {
+        // Se houver URL pública configurada (ngrok), usar ela
+        $publicUrl = env('APP_PUBLIC_URL');
+        if ($publicUrl) {
+            $baseUrl = rtrim($publicUrl, '/');
+            $cleanPath = ltrim($path, '/');
+            return $baseUrl . ($cleanPath ? '/' . $cleanPath : '');
+        }
+        
+        // Caso contrário, usar APP_URL
+        $appUrl = config('app.url', env('APP_URL', 'http://localhost'));
+        $baseUrl = rtrim($appUrl, '/');
+        $cleanPath = ltrim($path, '/');
+        return $baseUrl . ($cleanPath ? '/' . $cleanPath : '');
     }
 }

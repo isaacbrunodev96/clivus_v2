@@ -29,8 +29,13 @@ class AsaasWebhookController extends Controller
         $event = $request->input('event');
         $data = $request->all();
 
+        // Log detalhado para debug
         Log::info('Asaas Webhook Received', [
             'event' => $event,
+            'payment_id' => $data['payment']['id'] ?? null,
+            'payment_status' => $data['payment']['status'] ?? null,
+            'subscription_id' => $data['subscription']['id'] ?? $data['subscription'] ?? null,
+            'customer_id' => $data['payment']['customer'] ?? null,
             'data' => $data,
         ]);
 

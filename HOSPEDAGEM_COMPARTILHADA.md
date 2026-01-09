@@ -47,6 +47,8 @@
 ### 4. **Webhooks do Asaas**
 - Precisa de URL pública acessível
 - Verifique se a hospedagem permite receber requisições POST externas
+- **IMPORTANTE**: Configure a URL do webhook no painel do Asaas: `https://seudominio.com.br/webhook/asaas`
+- A URL deve estar configurada nas informações comerciais da conta Asaas
 
 ### 5. **Cron Jobs**
 - Algumas hospedagens compartilhadas permitem cron jobs
@@ -176,6 +178,10 @@ MAIL_FROM_NAME="${APP_NAME}"
 # Asaas
 ASAAS_API_KEY=sua_chave_api
 ASAAS_SANDBOX=false
+
+# URL pública para callbacks do Asaas (usar mesmo valor de APP_URL em produção)
+# IMPORTANTE: Esta URL deve ser acessível publicamente e configurada no painel do Asaas
+APP_PUBLIC_URL=https://seudominio.com.br
 ```
 
 ### 5. Ajustar index.php
@@ -208,6 +214,59 @@ php artisan migrate --force
 ```
 
 Ou via painel de controle (se disponível).
+
+## 🔐 Configuração do Asaas para Produção
+
+### 1. Configurar Webhook no Painel do Asaas
+
+1. Acesse o painel do Asaas: https://www.asaas.com (ou sandbox.asaas.com para testes)
+2. Vá em **Integrações → Webhooks**
+3. Clique em **Adicionar Webhook** ou edite o existente
+4. Configure:
+   - **URL do Webhook**: `https://seudominio.com.br/webhook/asaas`
+   - **Versão da API**: v3
+   - **Fila de sincronização ativada**: Sim
+   - **Tipo de envio**: Sequencial
+   - **Eventos**: Marque pelo menos:
+     - `PAYMENT_CONFIRMED` (obrigatório)
+     - `PAYMENT_CREATED`
+     - `PAYMENT_RECEIVED`
+     - `PAYMENT_OVERDUE`
+     - `SUBSCRIPTION_DELETED`
+
+### 2. Configurar Domínio nas Informações Comerciais
+
+Para que o redirecionamento automático funcione após o pagamento:
+
+1. Acesse **Minha Conta → Informações Comerciais** no Asaas
+2. Certifique-se de que o domínio `seudominio.com.br` está configurado
+3. O Asaas só aceita redirecionamentos para domínios configurados por segurança
+
+### 3. Verificar Filas de Webhook
+
+1. Vá em **Integrações → Logs de Webhooks**
+2. Verifique se há filas pausadas
+3. Se houver, reative-as clicando em "Reativar Fila"
+4. Monitore os logs para garantir que os webhooks estão sendo entregues (status 200)
+
+### 4. Testar Webhook
+
+Após configurar, teste enviando um POST manual para:
+```
+POST https://seudominio.com.br/webhook/asaas
+Content-Type: application/json
+
+{
+  "event": "PAYMENT_CONFIRMED",
+  "payment": {
+    "id": "pay_test123",
+    "status": "CONFIRMED",
+    "customer": "cus_test123"
+  }
+}
+```
+
+Verifique os logs em `storage/logs/laravel.log` para confirmar que foi recebido.
 
 ## 🔧 Ajustes Necessários para Hospedagem Compartilhada
 
@@ -250,6 +309,9 @@ post_max_size = 10M
 - [ ] Cache otimizado (`php artisan config:cache`)
 - [ ] Testar acesso ao site
 - [ ] Testar webhook do Asaas (URL pública)
+- [ ] Configurar webhook no painel do Asaas: `https://seudominio.com.br/webhook/asaas`
+- [ ] Configurar domínio nas informações comerciais do Asaas (para callbacks funcionarem)
+- [ ] Testar pagamento completo (criação → pagamento → webhook → ativação)
 - [ ] Configurar cron jobs (se necessário)
 
 ## 🚨 Problemas Comuns
@@ -271,9 +333,18 @@ chmod -R 775 storage/logs storage/framework
 - Verificar permissões da pasta `public`
 
 ### Webhook não funciona
-- Verificar se URL é acessível publicamente
+- Verificar se URL é acessível publicamente: `https://seudominio.com.br/webhook/asaas`
 - Verificar se hospedagem permite POST externo
-- Testar com ferramenta como Postman
+- Verificar se o domínio está configurado no painel do Asaas
+- Verificar logs em `storage/logs/laravel.log` para ver se o webhook está sendo recebido
+- Testar com ferramenta como Postman enviando POST para a URL do webhook
+- Verificar se há filas de webhook pausadas no painel do Asaas
+
+### Redirecionamento após pagamento não funciona
+- Verificar se `APP_PUBLIC_URL` está configurado no `.env` com a URL correta
+- Verificar se o domínio está configurado nas informações comerciais do Asaas
+- O sistema funciona mesmo sem redirecionamento automático (webhook + polling no dashboard)
+- Usuário pode clicar em "Ir para Dashboard" após pagar e receberá notificação quando confirmado
 
 ## 📞 Suporte
 
@@ -281,6 +352,42 @@ Se encontrar problemas, verifique:
 1. Logs em `storage/logs/laravel.log`
 2. Logs do servidor (via painel de controle)
 3. Documentação da hospedagem sobre Laravel
+
+## 📝 Script de Deploy Rápido
+
+Crie um script `deploy.sh` para facilitar o deploy:
+
+```bash
+#!/bin/bash
+
+echo "🚀 Iniciando deploy do CLIVUS..."
+
+# 1. Instalar dependências
+echo "📦 Instalando dependências..."
+composer install --optimize-autoloader --no-dev --no-interaction
+
+# 2. Build dos assets
+echo "🎨 Compilando assets..."
+npm install
+npm run build
+
+# 3. Otimizar para produção
+echo "⚡ Otimizando para produção..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 4. Executar migrations (se necessário)
+# php artisan migrate --force
+
+echo "✅ Deploy concluído!"
+```
+
+**Uso:**
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
 
 ## 💡 Recomendações
 
@@ -290,4 +397,43 @@ Para melhor performance e menos problemas:
 - **Hospedagem especializada em Laravel** (Hostinger, Laravel Forge, etc)
 
 Mas hospedagem compartilhada **funciona** se seguir este guia!
+
+## 🆘 Suporte e Troubleshooting
+
+### Verificar se tudo está funcionando:
+
+1. **Acesse o site**: `https://seudominio.com.br`
+2. **Teste login**: Faça login com um usuário
+3. **Teste criação de assinatura**: Crie uma assinatura de teste
+4. **Teste webhook**: Verifique logs após criar pagamento
+5. **Teste pagamento**: Faça um pagamento de teste no Asaas
+6. **Verifique ativação**: Confirme que a assinatura foi ativada automaticamente
+
+### Logs importantes:
+
+- **Laravel**: `storage/logs/laravel.log`
+- **Asaas Webhook**: Procure por "Asaas Webhook Received" nos logs
+- **Erros**: Procure por "ERROR" ou "Exception" nos logs
+
+### Comandos úteis via SSH:
+
+```bash
+# Ver logs em tempo real
+tail -f storage/logs/laravel.log
+
+# Limpar cache
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Recriar cache
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Verificar permissões
+ls -la storage/
+ls -la bootstrap/cache/
+```
 

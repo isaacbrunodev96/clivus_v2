@@ -71,9 +71,11 @@ class AsaasService
                 'externalReference' => $data['subscription_id'] ?? null,
             ];
 
-            // Adicionar URL de retorno se fornecida
-            if (isset($data['return_url'])) {
+            // Adicionar URL de retorno e callback se fornecida
+            if (isset($data['return_url']) && !str_contains($data['return_url'], 'localhost') && !str_contains($data['return_url'], '127.0.0.1')) {
                 $payload['returnUrl'] = $data['return_url'];
+                // Para assinaturas, o callback pode ser configurado no primeiro pagamento
+                // Mas vamos tentar adicionar aqui também se a API suportar
             }
 
             $response = Http::withHeaders([
@@ -222,11 +224,27 @@ class AsaasService
             // IMPORTANTE: O Asaas só aceita URLs de domínios válidos configurados na conta
             // Não usar callback para localhost ou URLs não configuradas
             if (isset($data['return_url']) && !str_contains($data['return_url'], 'localhost') && !str_contains($data['return_url'], '127.0.0.1')) {
+                // Tentar usar callback primeiro (mais moderno)
                 $payload['callback'] = [
                     'successUrl' => $data['return_url'],
                     'autoRedirect' => true,
                 ];
+                // Também adicionar returnUrl diretamente (fallback)
+                $payload['returnUrl'] = $data['return_url'];
+                
+                Log::info('Asaas Payment - Configurando callback e returnUrl', [
+                    'return_url' => $data['return_url'],
+                    'callback' => $payload['callback'],
+                ]);
+            } else {
+                Log::warning('Asaas Payment - return_url não configurada ou é localhost', [
+                    'return_url' => $data['return_url'] ?? 'não fornecido',
+                ]);
             }
+
+            Log::info('Asaas Payment - Criando pagamento', [
+                'payload' => $payload,
+            ]);
 
             $response = Http::withHeaders([
                 'access_token' => $this->apiKey,
@@ -242,6 +260,15 @@ class AsaasService
                         : 'https://www.asaas.com';
                     $result['checkoutUrl'] = "{$baseUrl}/c/{$result['id']}";
                 }
+                
+                Log::info('Asaas Payment - Pagamento criado com sucesso', [
+                    'payment_id' => $result['id'] ?? null,
+                    'has_callback' => isset($result['callback']),
+                    'has_returnUrl' => isset($result['returnUrl']),
+                    'invoiceUrl' => $result['invoiceUrl'] ?? null,
+                    'checkoutUrl' => $result['checkoutUrl'] ?? null,
+                ]);
+                
                 return $result;
             }
 
@@ -283,6 +310,42 @@ class AsaasService
             return null;
         } catch (\Exception $e) {
             Log::error('Asaas Service Exception - Get Payment', [
+                'message' => $e->getMessage(),
+                'payment_id' => $paymentId,
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Atualizar pagamento no Asaas (para adicionar callback após criação automática)
+     */
+    public function updatePayment(string $paymentId, array $data): ?array
+    {
+        try {
+            $response = Http::withHeaders([
+                'access_token' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->put("{$this->baseUrl}/payments/{$paymentId}", $data);
+
+            if ($response->successful()) {
+                Log::info('Asaas Payment - Pagamento atualizado com sucesso', [
+                    'payment_id' => $paymentId,
+                    'data' => $data,
+                ]);
+                return $response->json();
+            }
+
+            Log::error('Asaas API Error - Update Payment', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'payment_id' => $paymentId,
+                'data' => $data,
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Asaas Service Exception - Update Payment', [
                 'message' => $e->getMessage(),
                 'payment_id' => $paymentId,
             ]);

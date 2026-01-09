@@ -154,5 +154,171 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+    // Sistema de verificação automática de pagamentos pendentes
+    (function() {
+        let checkInterval = null;
+        let checkCount = 0;
+        const maxChecks = 60; // Verificar por até 60 vezes (5 minutos com intervalo de 5 segundos)
+        const checkIntervalTime = 5000; // Verificar a cada 5 segundos
+        
+        // Função para mostrar notificação
+        function showNotification(message, type = 'success') {
+            // Remover notificações anteriores
+            const existingNotification = document.getElementById('payment-notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Criar nova notificação
+            const notification = document.createElement('div');
+            notification.id = 'payment-notification';
+            notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300';
+            notification.style.cssText = type === 'success' 
+                ? 'background-color: rgba(34, 197, 94, 0.95); color: white; border: 1px solid rgb(22, 163, 74);'
+                : 'background-color: rgba(59, 130, 246, 0.95); color: white; border: 1px solid rgb(37, 99, 235);';
+            
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="font-semibold">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animar entrada
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Remover automaticamente após 10 segundos
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 10000);
+        }
+        
+        // Função para verificar pagamentos pendentes
+        function checkPendingPayments() {
+            checkCount++;
+            
+            // Parar após máximo de verificações
+            if (checkCount > maxChecks) {
+                if (checkInterval) {
+                    clearInterval(checkInterval);
+                    checkInterval = null;
+                }
+                return;
+            }
+            
+            // Fazer requisição para verificar pagamentos pendentes
+            fetch('{{ route("payment.pending.check") }}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.updated && data.message) {
+                    // Pagamento foi confirmado!
+                    showNotification(data.message, 'success');
+                    
+                    // Parar verificação
+                    if (checkInterval) {
+                        clearInterval(checkInterval);
+                        checkInterval = null;
+                    }
+                    
+                    // Recarregar página após 2 segundos para atualizar dados
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else if (!data.has_pending) {
+                    // Não há mais pagamentos pendentes, parar verificação
+                    if (checkInterval) {
+                        clearInterval(checkInterval);
+                        checkInterval = null;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao verificar pagamentos pendentes:', error);
+                // Continuar verificando mesmo em caso de erro
+            });
+        }
+        
+        // Iniciar verificação apenas se estivermos na página do dashboard
+        // e se houver possibilidade de pagamentos pendentes
+        function startPaymentCheck() {
+            // Verificar se já existe um intervalo rodando
+            if (checkInterval) {
+                return;
+            }
+            
+            // Verificar inicialmente se há pagamentos pendentes
+            fetch('{{ route("payment.pending.check") }}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.has_pending) {
+                    // Há pagamentos pendentes, iniciar verificação periódica
+                    checkInterval = setInterval(checkPendingPayments, checkIntervalTime);
+                    // Verificar imediatamente também
+                    checkPendingPayments();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao verificar pagamentos pendentes:', error);
+            });
+        }
+        
+        // Iniciar verificação quando a página carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startPaymentCheck);
+        } else {
+            startPaymentCheck();
+        }
+        
+        // Também verificar quando a página recebe foco (usuário voltou de outra aba)
+        window.addEventListener('focus', function() {
+            if (!checkInterval) {
+                startPaymentCheck();
+            }
+        });
+        
+        // Limpar intervalo quando a página for fechada
+        window.addEventListener('beforeunload', function() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+            }
+        });
+    })();
+</script>
+@endpush
 @endsection
 

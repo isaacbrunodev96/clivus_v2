@@ -217,5 +217,112 @@ class PaymentStatusController extends Controller
 
         return view('payment.waiting', compact('redirectUrl', 'moduleId', 'paymentId', 'subscriptionId'));
     }
+
+    /**
+     * Verificar pagamentos pendentes do usuário atual (para polling no dashboard)
+     */
+    public function checkPending(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $updated = false;
+        $message = null;
+        $type = null; // 'module' ou 'subscription'
+
+        // Verificar módulos pendentes
+        $pendingModules = UserModule::where('user_id', $user->id)
+            ->where('status', 'inactive')
+            ->whereNotNull('asaas_payment_id')
+            ->get();
+
+        foreach ($pendingModules as $userModule) {
+            try {
+                $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
+                if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
+                    if ($userModule->status === 'inactive') {
+                        $userModule->update(['status' => 'active']);
+                        $updated = true;
+                        $message = 'Módulo ativado com sucesso!';
+                        $type = 'module';
+                        
+                        \Log::info('Módulo ativado via polling do dashboard', [
+                            'user_module_id' => $userModule->id,
+                            'module_id' => $userModule->module_id,
+                            'payment_id' => $userModule->asaas_payment_id
+                        ]);
+                        break; // Retornar apenas o primeiro módulo ativado
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Erro ao verificar pagamento de módulo no polling', [
+                    'user_module_id' => $userModule->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Verificar assinaturas pendentes
+        $pendingSubscriptions = Subscription::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->whereNotNull('asaas_subscription_id')
+            ->get();
+        
+        // Se não encontrou módulo, verificar assinaturas pendentes
+        if (!$updated) {
+
+            foreach ($pendingSubscriptions as $subscription) {
+                try {
+                    $subscriptionData = $this->asaasService->getSubscription($subscription->asaas_subscription_id);
+                    if ($subscriptionData && isset($subscriptionData['status']) && $subscriptionData['status'] === 'ACTIVE') {
+                        if ($subscription->status === 'pending') {
+                            $subscription->update(['status' => 'active']);
+                            $updated = true;
+                            $message = 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!';
+                            $type = 'subscription';
+                            
+                            \Log::info('Assinatura ativada via polling do dashboard', [
+                                'subscription_id' => $subscription->id,
+                                'asaas_subscription_id' => $subscription->asaas_subscription_id
+                            ]);
+                            break;
+                        }
+                    } else {
+                        // Tentar verificar pelos pagamentos da assinatura
+                        $payment = $this->asaasService->getSubscriptionPayments($subscription->asaas_subscription_id);
+                        if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
+                            if ($subscription->status === 'pending') {
+                                $subscription->update(['status' => 'active']);
+                                $updated = true;
+                                $message = 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!';
+                                $type = 'subscription';
+                                
+                                \Log::info('Assinatura ativada via pagamento no polling do dashboard', [
+                                    'subscription_id' => $subscription->id,
+                                    'asaas_subscription_id' => $subscription->asaas_subscription_id
+                                ]);
+                                break;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Erro ao verificar assinatura no polling', [
+                        'subscription_id' => $subscription->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'updated' => $updated,
+            'message' => $message,
+            'type' => $type,
+            'has_pending' => $pendingModules->count() > 0 || $pendingSubscriptions->count() > 0
+        ]);
+    }
 }
 
