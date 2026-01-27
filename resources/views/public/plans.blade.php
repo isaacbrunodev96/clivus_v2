@@ -158,7 +158,7 @@
                 <p class="text-lg text-gray-500 mb-12">Veja como é simples separar suas finanças PF e PJ em minutos</p>
                 
                 <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe src="https://www.youtube-nocookie.com/embed/e9u0bGDMhtc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
                 <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
