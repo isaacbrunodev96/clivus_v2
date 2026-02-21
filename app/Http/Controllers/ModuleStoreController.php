@@ -176,7 +176,7 @@ class ModuleStoreController extends Controller
             return redirect()->route('modules.store')
                 ->with('info', 'Assinatura criada. A ativação será feita quando o pagamento for confirmado.');
         } catch (\Exception $e) {
-            \Log::error('Erro ao processar assinatura de módulo: ' . $e->getMessage(), [
+            Log::error('Erro ao processar assinatura de módulo: ' . $e->getMessage(), [
                 'module_id' => $module->id,
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString(),
@@ -224,7 +224,7 @@ class ModuleStoreController extends Controller
                 if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
                     // Pagamento confirmado mas módulo ainda não ativado - ativar manualmente
                     $userModule->update(['status' => 'active']);
-                    \Log::info('Módulo ativado manualmente no callback', [
+                    Log::info('Módulo ativado manualmente no callback', [
                         'user_module_id' => $userModule->id,
                         'module_id' => $moduleId,
                         'user_id' => $user->id,
@@ -233,7 +233,7 @@ class ModuleStoreController extends Controller
                         ->with('success', 'Módulo ativado com sucesso!');
                 }
             } catch (\Exception $e) {
-                \Log::warning('Erro ao verificar pagamento no callback', [
+                Log::warning('Erro ao verificar pagamento no callback', [
                     'payment_id' => $userModule->asaas_payment_id,
                     'error' => $e->getMessage(),
                 ]);
