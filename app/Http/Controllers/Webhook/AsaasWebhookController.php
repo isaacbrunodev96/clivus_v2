@@ -26,6 +26,33 @@ class AsaasWebhookController extends Controller
      */
     public function handle(Request $request)
     {
+        // Optional simple token verification: set ASAAS_WEBHOOK_TOKEN or services.asaas.webhook_token
+        $expectedToken = config('services.asaas.webhook_token', env('ASAAS_WEBHOOK_TOKEN'));
+        if ($expectedToken) {
+            // try multiple header names/formats
+            $authHeader = $request->header('Authorization');
+            $accessTokenHeader = $request->header('access_token') ?? $request->header('access-token');
+            $xToken = $request->header('x-asaas-token') ?? $request->header('x-hook-token') ?? $request->header('token');
+
+            $provided = null;
+            if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+                $provided = substr($authHeader, 7);
+            } elseif ($authHeader) {
+                $provided = $authHeader;
+            } elseif ($accessTokenHeader) {
+                $provided = $accessTokenHeader;
+            } elseif ($xToken) {
+                $provided = $xToken;
+            }
+
+            if (!$provided || trim($provided) !== trim($expectedToken)) {
+                Log::warning('Asaas Webhook: token inválido ou ausente', [
+                    'provided' => $provided ? substr($provided, 0, 8) . '...' : null
+                ]);
+                return response()->json(['error' => 'invalid token'], 403);
+            }
+        }
+
         $event = $request->input('event');
         $data = $request->all();
 
