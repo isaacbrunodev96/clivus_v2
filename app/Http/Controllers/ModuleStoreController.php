@@ -7,6 +7,7 @@ use App\Models\UserModule;
 use App\Services\AsaasService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ModuleStoreController extends Controller
 {
@@ -64,8 +65,9 @@ class ModuleStoreController extends Controller
      */
     public function purchase(Request $request, Module $module)
     {
+        // billing_type supports PIX, CREDIT_CARD, BOLETO
         $validated = $request->validate([
-            'billing_type' => 'required|in:PIX,CREDIT_CARD',
+            'billing_type' => 'required|in:PIX,CREDIT_CARD,BOLETO',
         ]);
 
         $user = Auth::user();
@@ -97,142 +99,90 @@ class ModuleStoreController extends Controller
                 ->with('error', 'Você precisa ter um plano ativo para comprar módulos adicionais.');
         }
 
-        // Criar pagamento no Asaas
+        // Criar assinatura mensal no Asaas (módulos são cobrados por mensalidade)
         try {
             // URL de retorno após pagamento - página de aguardando que verifica status
-            // Usar URL pública (ngrok em dev, APP_URL em produção)
-            $returnUrl = $this->getPublicUrl(route('payment.waiting', [
-                'module' => $module->id,
-                'payment_id' => null, // Será preenchido após criar o pagamento
-            ]));
-            
+            $returnUrl = $this->getPublicUrl(route('modules.payment.callback', ['module' => $module->id]));
+
             // Verificar se já existe um UserModule pendente para este módulo
             $existingUserModule = UserModule::where('user_id', $user->id)
                 ->where('module_id', $module->id)
                 ->first();
-            
-            if ($existingUserModule) {
-                // Se já existe e está inativo, tentar usar o pagamento existente
-                if ($existingUserModule->status === 'inactive' && $existingUserModule->asaas_payment_id) {
-                    // Buscar informações do pagamento no Asaas para obter invoiceUrl
-                    try {
-                        $existingPayment = $this->asaasService->getPayment($existingUserModule->asaas_payment_id);
-                        if ($existingPayment) {
-                            if (isset($existingPayment['invoiceUrl'])) {
-                                return redirect($existingPayment['invoiceUrl']);
-                            } elseif (isset($existingPayment['invoiceNumber'])) {
-                                $baseUrl = config('services.asaas.sandbox', true) 
-                                    ? 'https://sandbox.asaas.com'
-                                    : 'https://www.asaas.com';
-                                return redirect("{$baseUrl}/i/{$existingPayment['invoiceNumber']}");
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        \Log::warning('Erro ao buscar pagamento existente, criando novo', [
-                            'payment_id' => $existingUserModule->asaas_payment_id,
-                            'error' => $e->getMessage(),
-                        ]);
-                        // Continuar para criar novo pagamento
-                    }
-                }
-                
-                // Se já existe e está ativo, retornar erro
-                if ($existingUserModule->status === 'active') {
-                    return redirect()->route('modules.store')
-                        ->with('error', 'Você já possui este módulo.');
-                }
+
+            if ($existingUserModule && $existingUserModule->status === 'active') {
+                return redirect()->route('modules.store')
+                    ->with('error', 'Você já possui este módulo.');
             }
-            
-            $payment = $this->asaasService->createPayment([
+
+            // Criar assinatura recorrente no Asaas
+            $subscription = $this->asaasService->createSubscription([
                 'customer_id' => $user->asaas_customer_id,
                 'billing_type' => $validated['billing_type'],
                 'value' => $module->price,
-                'due_date' => now()->addDays(3)->format('Y-m-d'),
-                'description' => "Compra do módulo: {$module->name}",
+                'next_due_date' => now()->addMonth()->format('Y-m-d'),
+                'cycle' => 'MONTHLY',
+                'description' => "Assinatura mensal do módulo: {$module->name}",
+                'subscription_id' => null,
                 'return_url' => $returnUrl,
             ]);
 
-            if (!$payment) {
-                throw new \Exception('Erro ao criar pagamento no Asaas');
+            if (!$subscription || !isset($subscription['id'])) {
+                throw new \Exception('Erro ao criar assinatura do módulo no Asaas');
             }
 
-            // Criar ou atualizar registro do módulo do usuário
+            // Criar ou atualizar registro do módulo do usuário associando a assinatura
             if ($existingUserModule) {
-                // Atualizar registro existente
                 $existingUserModule->update([
-                    'subscription_id' => $subscription?->id,
+                    'subscription_id' => $subscription['id'] ?? null,
                     'price_paid' => $module->price,
-                    'asaas_payment_id' => $payment['id'] ?? null,
-                    'status' => 'inactive', // Será ativado quando o pagamento for confirmado via webhook
+                    'asaas_payment_id' => $subscription['id'] ?? null,
+                    'status' => 'inactive',
                     'purchased_at' => now(),
                 ]);
             } else {
-                // Criar novo registro
                 UserModule::create([
                     'user_id' => $user->id,
                     'module_id' => $module->id,
-                    'subscription_id' => $subscription?->id,
+                    'subscription_id' => $subscription['id'] ?? null,
                     'price_paid' => $module->price,
-                    'asaas_payment_id' => $payment['id'] ?? null,
-                    'status' => 'inactive', // Será ativado quando o pagamento for confirmado via webhook
+                    'asaas_payment_id' => $subscription['id'] ?? null,
+                    'status' => 'inactive',
                     'purchased_at' => now(),
                 ]);
             }
 
-            // Obter URL de pagamento - SEMPRE usar invoiceUrl ou invoiceNumber
-            // NÃO usar payment_id diretamente na URL /i/ - o Asaas precisa do invoiceNumber
+            // A assinatura cria automaticamente um pagamento inicial — tentar obter URL
             $paymentUrl = null;
-            if (isset($payment['invoiceUrl'])) {
-                // Melhor opção: usar invoiceUrl diretamente do Asaas
-                $paymentUrl = $payment['invoiceUrl'];
-            } elseif (isset($payment['invoiceNumber'])) {
-                // Segunda opção: construir URL usando invoiceNumber
+            sleep(1);
+            $paymentData = $this->asaasService->getSubscriptionPayments($subscription['id']);
+            if ($paymentData && isset($paymentData['invoiceUrl'])) {
+                $paymentUrl = $paymentData['invoiceUrl'];
+            } elseif ($paymentData && isset($paymentData['invoiceNumber'])) {
                 $baseUrl = config('services.asaas.sandbox', true) 
                     ? 'https://sandbox.asaas.com'
                     : 'https://www.asaas.com';
-                $paymentUrl = "{$baseUrl}/i/{$payment['invoiceNumber']}";
-            } elseif (isset($payment['checkoutUrl'])) {
-                // Terceira opção: usar checkoutUrl se disponível
-                $paymentUrl = $payment['checkoutUrl'];
-            } elseif (isset($payment['id'])) {
-                // Última opção: usar checkout URL com payment_id (não invoice URL)
-                $baseUrl = config('services.asaas.sandbox', true) 
-                    ? 'https://sandbox.asaas.com'
-                    : 'https://www.asaas.com';
-                // Usar /c/ para checkout, não /i/ para invoice
-                $paymentUrl = "{$baseUrl}/c/{$payment['id']}";
+                $paymentUrl = "{$baseUrl}/i/{$paymentData['invoiceNumber']}";
             }
 
             if ($paymentUrl) {
-                \Log::info('Redirecionando para pagamento de módulo', [
-                    'module_id' => $module->id,
-                    'payment_id' => $payment['id'] ?? null,
-                    'payment_url' => $paymentUrl,
-                ]);
-                
-                // Salvar informações do pagamento na sessão para quando o usuário voltar do Asaas
                 session()->put('pending_payment', [
-                    'type' => 'module',
+                    'type' => 'module_subscription',
                     'module_id' => $module->id,
-                    'payment_id' => $payment['id'] ?? null,
+                    'subscription_id' => $subscription['id'] ?? null,
                 ]);
-                
-                // Redirecionar para o Asaas
-                // Quando o usuário completar o pagamento, ele pode voltar manualmente ou usar a página de waiting
-                // A página de waiting verificará automaticamente o status
                 return redirect($paymentUrl);
             }
 
             return redirect()->route('modules.store')
-                ->with('info', 'Pagamento criado! O link será enviado por email.');
+                ->with('info', 'Assinatura criada. A ativação será feita quando o pagamento for confirmado.');
         } catch (\Exception $e) {
-            \Log::error('Erro ao processar compra de módulo: ' . $e->getMessage(), [
+            \Log::error('Erro ao processar assinatura de módulo: ' . $e->getMessage(), [
                 'module_id' => $module->id,
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString(),
             ]);
             return redirect()->route('modules.store')
-                ->with('error', 'Erro ao processar compra: ' . $e->getMessage());
+                ->with('error', 'Erro ao processar assinatura do módulo: ' . $e->getMessage());
         }
     }
 

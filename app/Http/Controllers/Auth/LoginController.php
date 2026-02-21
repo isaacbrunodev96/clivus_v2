@@ -46,11 +46,17 @@ class LoginController extends Controller
                 }
             }
             
+            // Se for Super Admin, abrir dashboard administrativo
+            if (Auth::user()->isSuperAdmin()) {
+                return redirect()->intended(route('admin.dashboard'));
+            }
+
             // Redirecionar usuários sem plano para equipes
             if (!Auth::user()->hasActiveSubscription()) {
                 return redirect()->intended(route('team.teams'));
             }
-            
+
+            // Usuário com assinatura ativa -> abrir dashboard financeiro
             return redirect()->intended(route('finance.accounts.index'));
         }
 

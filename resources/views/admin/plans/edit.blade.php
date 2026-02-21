@@ -42,6 +42,7 @@
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
                         <option value="monthly" {{ old('billing_cycle', $plan->billing_cycle) === 'monthly' ? 'selected' : '' }}>Mensal</option>
                         <option value="yearly" {{ old('billing_cycle', $plan->billing_cycle) === 'yearly' ? 'selected' : '' }}>Anual</option>
+                        <option value="lifetime" {{ old('billing_cycle', $plan->billing_cycle) === 'lifetime' ? 'selected' : '' }}>Vitalício (Pagamento único)</option>
                     </select>
                 </div>
                 

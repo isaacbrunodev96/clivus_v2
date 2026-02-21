@@ -41,6 +41,7 @@
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
                         <option value="monthly">Mensal</option>
                         <option value="yearly">Anual</option>
+                        <option value="lifetime">Vitalício (Pagamento único)</option>
                     </select>
                 </div>
                 

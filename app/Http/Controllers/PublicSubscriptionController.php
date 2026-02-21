@@ -104,10 +104,65 @@ class PublicSubscriptionController extends Controller
 
             $user->update(['asaas_customer_id' => $customerData['id']]);
 
-            // Criar assinatura no Asaas
             // URL de retorno após pagamento bem-sucedido - redirecionar para dashboard
-            // Usar URL pública (ngrok em dev, APP_URL em produção)
             $returnUrl = $this->getPublicUrl(route('dashboard.index') . '?payment=success');
+
+            if ($plan->billing_cycle === 'lifetime') {
+                // Plano vitalício: criar pagamento único em vez de assinatura
+                $payment = $this->asaasService->createPayment([
+                    'customer_id' => $user->asaas_customer_id,
+                    'billing_type' => $validated['billing_type'],
+                    'value' => $plan->price,
+                    'due_date' => now()->addDays(3)->format('Y-m-d'),
+                    'description' => "Compra vitalícia do plano: {$plan->name}",
+                    'return_url' => $returnUrl,
+                ]);
+
+                if (!$payment) {
+                    throw new \Exception('Erro ao criar pagamento no Asaas para plano vitalício');
+                }
+
+                // Criar assinatura local como pendente até confirmação (marca como 'pending')
+                $subscription = Subscription::create([
+                    'user_id' => $user->id,
+                    'plan_id' => $plan->id,
+                    'asaas_subscription_id' => null,
+                    'asaas_customer_id' => $user->asaas_customer_id,
+                    'status' => 'pending',
+                    'starts_at' => now(),
+                    'next_billing_date' => null,
+                ]);
+
+                // Obter URL de pagamento (invoiceUrl ou checkout)
+                $paymentUrl = $payment['invoiceUrl'] ?? null;
+                if (!$paymentUrl && isset($payment['invoiceNumber'])) {
+                    $baseUrl = config('services.asaas.sandbox', true) ? 'https://sandbox.asaas.com' : 'https://www.asaas.com';
+                    $paymentUrl = "{$baseUrl}/i/{$payment['invoiceNumber']}";
+                } elseif (!$paymentUrl && isset($payment['checkoutUrl'])) {
+                    $paymentUrl = $payment['checkoutUrl'];
+                } elseif (!$paymentUrl && isset($payment['id'])) {
+                    $baseUrl = config('services.asaas.sandbox', true) ? 'https://sandbox.asaas.com' : 'https://www.asaas.com';
+                    $paymentUrl = "{$baseUrl}/c/{$payment['id']}";
+                }
+
+                DB::commit();
+
+                // Salvar pending_payment para verificar no retorno
+                session()->put('pending_payment', [
+                    'type' => 'plan_one_time',
+                    'plan_id' => $plan->id,
+                    'payment_id' => $payment['id'] ?? null,
+                ]);
+
+                if ($paymentUrl) {
+                    return redirect($paymentUrl);
+                }
+
+                return redirect()->route('subscriptions.index')
+                    ->with('info', 'Pagamento criado. O link será enviado por email.');
+            }
+
+            // Caso padrão: criar assinatura recorrente no Asaas
             $subscriptionData = $this->asaasService->createSubscription([
                 'customer_id' => $user->asaas_customer_id,
                 'billing_type' => $validated['billing_type'],

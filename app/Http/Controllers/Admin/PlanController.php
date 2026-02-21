@@ -35,7 +35,8 @@ class PlanController extends Controller
             'slug' => 'required|string|max:255|unique:plans',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'billing_cycle' => 'required|in:monthly,yearly',
+            // billing_cycle can be monthly, yearly or lifetime (vitalício)
+            'billing_cycle' => 'required|in:monthly,yearly,lifetime',
             'features' => 'nullable|array',
             'allowed_modules' => 'nullable|array',
             'allowed_modules.*' => 'exists:modules,slug',
@@ -64,7 +65,8 @@ class PlanController extends Controller
             'slug' => 'required|string|max:255|unique:plans,slug,' . $plan->id,
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'billing_cycle' => 'required|in:monthly,yearly',
+            // billing_cycle can be monthly, yearly or lifetime (vitalício)
+            'billing_cycle' => 'required|in:monthly,yearly,lifetime',
             'features' => 'nullable|array',
             'allowed_modules' => 'nullable|array',
             'allowed_modules.*' => 'exists:modules,slug',
