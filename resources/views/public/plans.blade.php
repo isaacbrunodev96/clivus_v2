@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="carbon-pro" data-color-mode="light">
+<html lang="pt-BR" data-theme="carbon-pro" data-color-mode="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,80 +8,91 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
+        :root{
+            --bg-900: #071023;
+            --bg-800: #0b1220;
+            --glass: rgba(255,255,255,0.04);
+            --accent: #8b5cf6;
+            --accent-2: #00b4cc;
+            --muted: #94a3b8;
+        }
+        html,body{height:100%}
+        body{
             font-family: 'Inter', sans-serif;
-            color: #1e293b;
+            background: radial-gradient(1200px 600px at 10% 10%, rgba(139,92,246,0.08), transparent),
+                        linear-gradient(180deg, var(--bg-900), var(--bg-800));
+            color: #e6eef8;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
         }
-        .text-clivus-blue { color: #008eb4; }
-        .bg-clivus-blue { background-color: #008eb4; }
-        .border-clivus-blue { border-color: #008eb4; }
-        
-        .hero-title {
-            font-size: 3.5rem;
-            line-height: 1.1;
-            font-weight: 900;
-        }
-        
-        .dashboard-shadow {
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-        }
-
-        .btn-clivus-outline {
-            border: 1.5px solid #008eb4;
-            color: #008eb4;
-            transition: all 0.3s;
-        }
-        
-        .btn-clivus-outline:hover {
-            background-color: #008eb4;
-            color: white;
-        }
-
-        .check-icon {
-            color: #22c55e;
-        }
-
-        .feature-dark-bar {
-            background-color: #0f172a;
-        }
-                .video-container {
-            position: relative;
-            padding-bottom: 56.25%; /* Proporção 16:9 */
-            height: 0;
-            overflow: hidden;
+        #hero-particles{position:absolute;inset:0;z-index:0;pointer-events:none}
+        .site-header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.3));backdrop-filter: blur(6px);border-bottom:1px solid rgba(255,255,255,0.03)}
+        .logo-text{font-weight:800;letter-spacing:0.6px;color:var(--accent)}
+        .hero-title{font-size:2.6rem;line-height:1.02;font-weight:900}
+        .muted{color:var(--muted)}
+        .plan-card{
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.04);
+            box-shadow: 0 10px 30px rgba(2,6,23,0.6);
             border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: transform .45s cubic-bezier(.2,.9,.35,1), box-shadow .35s;
+            transform: translateY(0) rotate(0.01deg);
         }
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        .plan-card:hover{
+            transform: translateY(-14px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(3,7,25,0.7);
+        }
+        .price{
+            font-weight:900;font-size:2.25rem;
+            background: linear-gradient(90deg,var(--accent),var(--accent-2));
+            -webkit-background-clip:text;background-clip:text;color:transparent;
+        }
+        .badge-reco{
+            background: linear-gradient(90deg,#1f2937, rgba(255,255,255,0.03));
+            border:1px solid rgba(255,255,255,0.05);
+            color:var(--accent);
+            font-weight:700;
+            padding:4px 10px;border-radius:999px;font-size:12px;
+        }
+        .cta-btn{
+            background: linear-gradient(90deg,var(--accent),var(--accent-2));
+            color:white;padding:12px;border-radius:12px;font-weight:800;
+            box-shadow: 0 8px 30px rgba(139,92,246,0.18);
+            transition: transform .18s;
+        }
+        .cta-btn:active{transform:translateY(1px) scale(.995)}
+        @keyframes floatY{
+            0%{transform:translateY(0)}
+            50%{transform:translateY(-8px)}
+            100%{transform:translateY(0)}
+        }
+        .float-slow{animation: floatY 6s ease-in-out infinite}
+        @media (min-width:1024px){ .hero-title{font-size:3.6rem} }
+        @media (prefers-reduced-motion: reduce){
+            .plan-card, .cta-btn, .float-slow{animation:none;transition:none}
         }
     </style>
 </head>
-<body class="antialiased">
-   <!-- Top Info Bar & Header (Identical to Image) -->
-    <header class="border-b border-gray-100 sticky top-0 bg-white z-50">
+<body class="antialiased relative">
+    <div id="hero-particles" style="position:absolute;inset:0;z-index:0;pointer-events:none"></div>
+   <!-- Top Info Bar & Header (Dark, sticky) -->
+    <header class="site-header">
         <div class="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
-            <!-- Logo -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
                 <img src="{{ asset('assets/logo.png') }}" alt="Clivus Logo" class="w-10">
-                <span class="text-2xl font-bold tracking-tight text-[#0f172a]">Clivus</span>
+                <span class="logo-text text-lg">CLIVUS</span>
             </div>
 
-            <!-- Central Info -->
-            <div class="hidden md:flex items-center gap-4 text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+            <div class="hidden md:flex items-center gap-6 muted text-xs uppercase font-semibold tracking-wider">
                 <span>100% Online</span>
-                <span class="text-gray-200">|</span>
-                <span>Acesso de Qualquer Lugar</span>
+                <span>|</span>
+                <span>Suporte Premium</span>
             </div>
 
-            <!-- Action Button -->
-            <a href="{{ route('login') }}" class="btn-clivus-outline px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider">
-                Entrar no Sistema
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg border border-white/6 muted hover:bg-white/3 transition">Entrar</a>
+                <a href="#plans" class="cta-btn hidden sm:inline-flex items-center gap-3">Ver Planos</a>
+            </div>
         </div>
     </header>
 
@@ -89,10 +100,10 @@
     <section class="pt-16 pb-20 px-6">
         <div class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-                <h1 class="hero-title text-[#0f172a] mb-6">
-                    Você Está Misturando as Finanças do <span class="text-clivus-blue">CPF e CNPJ?</span>
+                <h1 class="hero-title mb-6" style="color:#ffffff;text-shadow:0 10px 30px rgba(2,6,23,0.6);">
+                    Você Está Misturando as Finanças do <span style="background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent;font-weight:900">CPF &amp; CNPJ?</span>
                 </h1>
-                <p class="text-xl text-gray-500 mb-8 max-w-xl leading-relaxed">
+                <p class="text-xl muted mb-8 max-w-xl leading-relaxed">
                     Isso coloca você em risco com o fisco e impede seu negócio de crescer. O Clivus separa tudo de forma simples e definitiva.
                 </p>
                 
@@ -151,109 +162,92 @@
     </div>
 
 
-        <!-- Video Section -->
-        <section class="py-24 px-4 bg-white">
-            <div class="max-w-4xl mx-auto text-center">
-                <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Assista ao Vídeo e Descubra Como o Clivus Funciona</h2>
-                <p class="text-lg text-gray-500 mb-12">Veja como é simples separar suas finanças PF e PJ em minutos</p>
-                
-                <div class="video-container">
-                    <iframe src="https://www.youtube-nocookie.com/embed/e9u0bGDMhtc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <!-- Vídeo - Dark Showcase -->
+        <section class="py-20 px-4" style="background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);">
+            <div class="max-w-5xl mx-auto text-center relative z-10">
+                <h2 class="text-3xl md:text-4xl font-extrabold mb-4" style="color: #e6eef8;">Assista ao Vídeo — Entenda o Valor</h2>
+                <p class="muted text-lg mb-8">Em poucos minutos você verá porque o Clivus é a solução premium para separar CPF e CNPJ.</p>
+
+                <div class="relative mx-auto mb-8" style="max-width:900px;">
+                    <div id="video-card" class="rounded-2xl overflow-hidden" style="background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); box-shadow:0 20px 60px rgba(2,6,23,0.6);">
+                        <div style="position:relative;padding-top:56.25%;">
+                            <iframe id="vsl-iframe" src="https://www.youtube-nocookie.com/embed/e9u0bGDMhtc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
+                        </div>
+                    </div>
+                    <!-- decorative floating badge -->
+                    <div class="absolute -bottom-6 left-6 float-slow" style="background:rgba(255,255,255,0.03);padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);">
+                        <span class="font-bold" style="color:var(--accent)">Demonstração Rápida</span>
+                    </div>
                 </div>
 
-                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-3">
-                        <span class="text-blue-500 font-bold">5 min</span>
-                        <span class="text-xs font-bold text-gray-400 uppercase">Duração do Vídeo</span>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                        <div class="font-bold" style="color:#fff">5 min</div>
+                        <div class="muted text-xs uppercase">Duração</div>
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-3">
-                        <span class="text-blue-500 font-bold">100%</span>
-                        <span class="text-xs font-bold text-gray-400 uppercase">Conteúdo para evoluir</span>
+                    <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                        <div class="font-bold" style="color:#fff">100%</div>
+                        <div class="muted text-xs uppercase">Conteúdo Essencial</div>
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-3">
-                        <span class="text-blue-500 font-bold">0 Bónus</span>
-                        <span class="text-xs font-bold text-gray-400 uppercase">Acesso Gratuito</span>
+                    <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                        <div class="font-bold" style="color:#fff">Sem Custos</div>
+                        <div class="muted text-xs uppercase">Acesso Gratuito</div>
                     </div>
                 </div>
-  
-            <div class="mt-8">
-                <a href="#plans">
-                <button class="bg-[#0097B2] hover:bg-[#007E95] text-white font-bold py-3 px-8 rounded-lg text-md inline-flex items-center transition-all shadow-md uppercase">
-                    Ver Opções e Começar
-                    <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
-                </a>
-                <div class="mt-3 flex items-center justify-center text-xs text-green-600 font-medium">
-                    <i class="fa-regular fa-circle-check mr-1"></i>
-                    Proteja seu negócio - 100% seguro e legal
+
+                <div class="mt-8">
+                    <a href="#plans">
+                    <button class="cta-btn">Ver Planos e Começar</button>
+                    </a>
                 </div>
-            </div>
             </div>
         </section>
- <section class="py-16 bg-gray-50 border-t border-gray-100">
+    <section class="py-16" style="border-top:1px solid rgba(255,255,255,0.03);">
         <div class="max-w-6xl mx-auto px-4 text-center">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-[#0D2543] mb-6">
-                Por Que Você Está Colocando Seu Negócio em Risco
+            <h2 class="text-3xl md:text-4xl font-extrabold mb-6" style="color:#e6eef8;">
+                Evite Riscos Fiscais e Cresça com Segurança
             </h2>
-            <p class="text-gray-600 max-w-2xl mx-auto mb-12">
-                Cada dia que passa com as finanças do CPF e CNPJ misturadas aumenta suas chances de enfrentar:
+            <p class="muted max-w-2xl mx-auto mb-12">
+                Manter finanças PF e PJ separadas reduz exposição a autuações, multas e bloqueios de crescimento.
             </p>
 
-            <!-- Cards de Risco -->
+            <!-- Cards de Risco (dark) -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Risco 1 -->
-                <div class="bg-white border border-red-50 p-8 rounded-xl shadow-sm text-left hover:border-red-200 transition-colors">
-                    <div class="text-red-500 mb-4 text-xl">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-800 mb-3">Violação da Legislação</h3>
-                    <p class="text-sm text-gray-500 mb-4">Misturar finanças PF e PJ viola a separação patrimonial exigida por lei.</p>
-                    <p class="text-sm font-bold text-red-600">Você pode estar descumprindo normas legais sem saber.</p>
+                <div class="p-8 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                    <div class="text-red-400 mb-4 text-xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <h3 class="font-bold mb-3" style="color:#fff">Violação da Legislação</h3>
+                    <p class="muted text-sm mb-4">Misturar contas pode inviabilizar sua conformidade fiscal.</p>
+                    <p class="text-sm font-bold" style="color:#ff8a80">Risco de autuações e multas.</p>
                 </div>
 
-                <!-- Risco 2 -->
-                <div class="bg-white border border-red-50 p-8 rounded-xl shadow-sm text-left hover:border-red-200 transition-colors">
-                    <div class="text-red-500 mb-4 text-xl">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-800 mb-3">Risco Fiscal Iminente</h3>
-                    <p class="text-sm text-gray-500 mb-4">Receita Federal pode caracterizar isso como desvio de recursos.</p>
-                    <p class="text-sm font-bold text-red-600">Multas, autuações e problemas graves com o fisco.</p>
+                <div class="p-8 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                    <div class="text-red-400 mb-4 text-xl"><i class="fa-solid fa-bolt"></i></div>
+                    <h3 class="font-bold mb-3" style="color:#fff">Risco Fiscal Iminente</h3>
+                    <p class="muted text-sm mb-4">Falhas de gestão abrem portas para autuações e problemas com a Receita.</p>
+                    <p class="text-sm font-bold" style="color:#ff8a80">Impacto direto no caixa.</p>
                 </div>
 
-                <!-- Risco 3 -->
-                <div class="bg-white border border-red-50 p-8 rounded-xl shadow-sm text-left hover:border-red-200 transition-colors">
-                    <div class="text-red-500 mb-4 text-xl">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-800 mb-3">Barreira ao Crescimento</h3>
-                    <p class="text-sm text-gray-500 mb-4">Investidores e bancos não confiam em empresas com finanças misturadas.</p>
-                    <p class="text-sm font-bold text-red-600">Impossível escalar e crescer de verdade o negócio.</p>
+                <div class="p-8 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                    <div class="text-red-400 mb-4 text-xl"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3 class="font-bold mb-3" style="color:#fff">Barreira ao Crescimento</h3>
+                    <p class="muted text-sm mb-4">Investidores e bancos exigem transparência financeira.</p>
+                    <p class="text-sm font-bold" style="color:#ff8a80">Menor acesso a crédito e oportunidades.</p>
                 </div>
             </div>
 
-            <!-- Rodapé da Secção -->
-            <div class="mt-16 text-gray-500 text-sm">
-                E você não precisa de contador, consultor ou planilhas complicadas.
+            <div class="mt-12 muted">
+                <p>Não precisa complicar — o Clivus automatiza a separação e mantém tudo em conformidade.</p>
             </div>
-            
+
             <div class="mt-8">
                 <a href="#plans">
-                <button class="bg-[#0097B2] hover:bg-[#007E95] text-white font-bold py-3 px-8 rounded-lg text-md inline-flex items-center transition-all shadow-md uppercase">
-                    Ver Opções e Começar
-                    <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
+                    <button class="cta-btn">Ver Opções e Começar</button>
                 </a>
-                <div class="mt-3 flex items-center justify-center text-xs text-green-600 font-medium">
-                    <i class="fa-regular fa-circle-check mr-1"></i>
-                    Proteja seu negócio - 100% seguro e legal
-                </div>
             </div>
-
         </div>
     </section>
         <!-- Apresentação Clivus: Simples. Prático. Objetivo. -->
-        <section class="py-24 px-4 bg-gray-50">
+        <section class="py-24 px-4">
             <div class="max-w-6xl mx-auto text-center">
                 <h2 class="text-4xl font-black text-gray-900 mb-4">Simples. Prático. Objetivo.</h2>
                 <p class="text-gray-500 mb-16 max-w-2xl mx-auto font-medium">Uma ferramenta completa mas descomplicada. Funciona perfeitamente para qualquer tamanho de empresa — de MEI a médio porte.</p>
@@ -274,12 +268,12 @@
                     @endphp
 
                     @foreach($features as $feature)
-                    <div class="bg-white p-8 rounded-xl border border-gray-100 text-left hover:shadow-lg transition-shadow">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-6">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <div class="p-8 rounded-xl" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-6" style="background:rgba(255,255,255,0.03);">
+                            <svg class="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
-                        <h3 class="font-bold text-gray-900 mb-3">{{ $feature['title'] }}</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">{{ $feature['desc'] }}</p>
+                        <h3 class="font-bold mb-3" style="color:#fff">{{ $feature['title'] }}</h3>
+                        <p class="text-sm muted leading-relaxed">{{ $feature['desc'] }}</p>
                     </div>
                     @endforeach
                 </div>
@@ -312,10 +306,10 @@
         </section>
 
         <!-- Nossos Clientes Dizem -->
-        <section class="py-24 px-4 bg-white">
+        <section class="py-24 px-4">
             <div class="max-w-6xl mx-auto text-center">
-                <h2 class="text-4xl font-black text-gray-900 mb-4">Veja o que Nossos Clientes Dizem</h2>
-                <p class="text-gray-500 mb-16 max-w-2xl mx-auto">Mais de 2.000 empreendedores já transformaram suas finanças com o Clivus. Conheça algumas histórias de sucesso reais.</p>
+                <h2 class="text-4xl font-black mb-4" style="color:#e6eef8;">Veja o que Nossos Clientes Dizem</h2>
+                <p class="muted mb-16 max-w-2xl mx-auto">Mais de 2.000 empreendedores já transformaram suas finanças com o Clivus. Conheça algumas histórias de sucesso reais.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     @php
@@ -352,25 +346,25 @@
                     @endphp
 
                     @foreach($testimonials as $t)
-                    <div class="testimonial-card bg-white p-8 rounded-xl text-left border border-gray-100">
+                    <div class="testimonial-card p-8 rounded-xl text-left" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);">
                         <div class="flex gap-1 mb-4">
                             @for($i=0; $i<5; $i++)
                                 <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                             @endfor
                         </div>
-                        <p class="text-gray-600 italic mb-8 text-sm leading-relaxed">"{{ $t['text'] }}"</p>
-                        <div class="flex items-center gap-4 border-t border-gray-50 pt-6">
-                            <div class="w-12 h-12 bg-clivus rounded-full flex items-center justify-center text-white font-bold" style="background-color: var(--clivus-blue);">
+                        <p class="italic mb-8 text-sm leading-relaxed" style="color:#dbeafe">"{{ $t['text'] }}"</p>
+                        <div class="flex items-center gap-4 border-t border-white/5 pt-6">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background:linear-gradient(90deg,var(--accent),var(--accent-2));">
                                 {{ substr($t['name'], 0, 1) }}{{ substr(explode(' ', $t['name'])[1], 0, 1) }}
                             </div>
-                            <div>
-                                <h4 class="font-bold text-gray-900 text-sm">{{ $t['name'] }}</h4>
-                                <p class="text-[11px] text-gray-400 uppercase font-bold tracking-wider">{{ $t['role'] }} | {{ $t['location'] }}</p>
+                            <div class="">
+                                <h4 class="font-bold text-sm" style="color:#fff">{{ $t['name'] }}</h4>
+                                <p class="text-[11px] muted uppercase font-bold tracking-wider">{{ $t['role'] }} | {{ $t['location'] }}</p>
                             </div>
                         </div>
-                        <div class="mt-4 bg-green-50 p-2 rounded-lg flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="text-[11px] font-bold text-green-700 uppercase">Resultado: {{ $t['result'] }}</span>
+                        <div class="mt-4 p-2 rounded-lg flex items-center gap-2" style="background:rgba(16,185,129,0.06);">
+                            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="text-[11px] font-bold" style="color:#bbf7d0">Resultado: {{ $t['result'] }}</span>
                         </div>
                     </div>
                     @endforeach
@@ -422,47 +416,50 @@
             </div>
         </div>
 
-        <!-- Seção de Planos -->
-        <section class="py-20 px-4 bg-gray-50" id="plans">
+        <!-- Seção de Planos (Dark Premium) -->
+        <section id="plans" class="py-12 px-6">
             <div class="max-w-7xl mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-black mb-4">Escolha a opção Ideal Para o Seu Negócio</h2>
-                    <p class="font-bold text-gray-400 uppercase tracking-widest text-sm">Pagamento único • Sem mensalidades • Acesso Imediato</p>
+                <div class="text-center mb-12">
+                    <p class="badge-reco inline-block mb-4">Escolha seu acesso vitalício</p>
+                    <h2 class="text-3xl font-extrabold mb-2">Planos Premium — Pagamento Único</h2>
+                    <p class="muted">Preços atualizados automaticamente. Sem mensalidades. Segurança e suporte incluídos.</p>
                 </div>
 
                 @if($plans->count() > 0)
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     @foreach($plans as $plan)
-                    <div class="plan-card bg-white p-8 flex flex-col shadow-sm">
-                        <div class="text-center mb-8">
-                            <h3 class="text-lg font-bold text-clivus mb-2" style="color: var(--clivus-blue);">{{ $plan->name }}</h3>
-                            <div class="flex flex-col items-center">
-                                <span class="text-4xl font-black text-gray-900">R$ {{ number_format($plan->price, 2, ',', '.') }}</span>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Pagamento Único</span>
-                            </div>
+                    <div class="plan-card p-8 flex flex-col" role="article" aria-labelledby="plan-{{ $plan->id }}">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 id="plan-{{ $plan->id }}" class="text-lg font-bold">{{ $plan->name }}</h3>
+                            @if(optional($plan)->recommended)
+                                <span class="badge-reco">Recomendado</span>
+                            @endif
                         </div>
 
-                        <div class="flex-1">
-                            <ul class="space-y-3 mb-10">
+                        <div class="mb-6">
+                            <div class="price">R$ {{ number_format($plan->price, 2, ',', '.') }}</div>
+                            <div class="muted text-xs uppercase mt-1">Pagamento Único • Acesso Vitalício</div>
+                        </div>
+
+                        <div class="flex-1 mb-6">
+                            <ul class="space-y-3 muted text-sm">
                                 @php
                                     $planAllowedModules = $plan->allowed_modules ?? [];
                                     $includedModules = $allModules->filter(fn($m) => in_array($m->slug, $planAllowedModules));
                                 @endphp
                                 @foreach($includedModules as $module)
-                                <li class="flex items-start gap-3 text-[13px] font-medium text-gray-600">
-                                    <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                    {{ $module->name }}
+                                <li class="flex items-start gap-3">
+                                    <svg class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>{{ $module->name }}</span>
                                 </li>
                                 @endforeach
                             </ul>
                         </div>
 
-                        <a href="{{ route('public.signup', $plan) }}" class="block w-full py-4 rounded-lg bg-[#0f172a] text-white font-bold text-center text-sm transition hover:bg-black uppercase tracking-widest">
-                            Começar Agora
-                        </a>
-                        <p class="text-[10px] text-center text-gray-400 mt-4 leading-tight font-medium uppercase">
-                            Parcelamos no cartão • 100% seguro • Suporte incluso
-                        </p>
+                        <div class="mt-auto">
+                            <a href="{{ route('public.signup', $plan) }}" class="w-full inline-flex justify-center cta-btn py-3">Começar Agora</a>
+                            <p class="text-center muted text-xs mt-3">Parcelamos no cartão • 100% seguro • Suporte incluso</p>
+                        </div>
                     </div>
                     @endforeach
                 </div>
@@ -470,12 +467,12 @@
             </div>
         </section>
 
-        <!-- Perguntas Frequentes (FAQ) -->
-        <section class="py-24 px-4 bg-white">
+        <!-- Perguntas Frequentes (FAQ) - Dark -->
+        <section class="py-24 px-4" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);">
             <div class="max-w-3xl mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-black text-gray-900 mb-4">Perguntas Frequentes</h2>
-                    <p class="text-gray-500 font-medium">Esclarecemos as principais dúvidas sobre o Clivus. Se sua pergunta não estiver aqui, nossa equipe está pronta para ajudar!</p>
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-black mb-4" style="color:#e6eef8;">Perguntas Frequentes</h2>
+                    <p class="muted font-medium">Esclarecemos as principais dúvidas sobre o Clivus. Se sua pergunta não estiver aqui, nossa equipe está pronta para ajudar!</p>
                 </div>
 
                 <div class="space-y-4">
@@ -492,27 +489,23 @@
                     @endphp
 
                     @foreach($faqs as $faq)
-                    <div class="faq-item p-6">
+                    <div class="faq-item p-6" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;">
                         <button class="flex items-center justify-between w-full text-left focus:outline-none">
-                            <span class="font-bold text-gray-900 text-sm">{{ $faq['q'] }}</span>
+                            <span class="font-bold text-sm" style="color:#e6eef8;">{{ $faq['q'] }}</span>
                             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <div class="mt-4 text-sm text-gray-500 leading-relaxed">
+                        <div class="mt-4 text-sm muted leading-relaxed">
                             {{ $faq['a'] }}
                         </div>
                     </div>
                     @endforeach
                 </div>
 
-  
-            <div class="mt-8">
+            <div class="mt-8 text-center">
                 <a href="#plans">
-                <button class="bg-[#0097B2] hover:bg-[#007E95] text-white font-bold py-3 px-8 rounded-lg text-md inline-flex items-center transition-all shadow-md uppercase">
-                    Ver Opções e Começar
-                    <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
+                <button class="cta-btn">Ver Opções e Começar</button>
                 </a>
-                <div class="mt-3 flex items-center justify-center text-xs text-green-600 font-medium">
+                <div class="mt-3 flex items-center justify-center text-xs" style="color:var(--muted);font-weight:600">
                     <i class="fa-regular fa-circle-check mr-1"></i>
                     Proteja seu negócio - 100% seguro e legal
                 </div>
@@ -521,13 +514,48 @@
         </section>
 
         <!-- Footer -->
-        <footer class="py-12 bg-white border-t border-gray-100">
+        <footer class="py-12" style="border-top:1px solid rgba(255,255,255,0.03);">
             <div class="max-w-7xl mx-auto px-4 text-center">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <p class="text-xs font-bold uppercase tracking-widest" style="color:var(--muted)">
                     &copy; {{ date('Y') }} CLIVUS. Todos os direitos reservados.
                 </p>
             </div>
         </footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+    <script>
+        tsParticles.load("hero-particles", {
+            fpsLimit: 60,
+            particles: {
+                number: { value: 40 },
+                color: { value: ["#8b5cf6","#00b4cc","#ffffff"] },
+                shape: { type: "circle" },
+                opacity: { value: 0.08 },
+                size: { value: { min: 2, max: 8 } },
+                move: { enable: true, speed: 0.6, direction: "none", outModes: { default: "out" } }
+            },
+            interactivity: {
+                events: {
+                    onHover: { enable: true, mode: "grab" },
+                    onClick: { enable: false }
+                },
+                modes: { grab: { distance: 140, links: { opacity: 0.1 } } }
+            },
+            detectRetina: true
+        });
+
+        document.addEventListener('DOMContentLoaded', function(){
+            const cards = document.querySelectorAll('.plan-card');
+            cards.forEach((c,i)=> {
+                c.style.opacity = 0;
+                c.style.transform = 'translateY(18px)';
+                setTimeout(()=> {
+                    c.style.transition = 'opacity .6s ease-out, transform .6s cubic-bezier(.2,.9,.35,1)';
+                    c.style.opacity = 1;
+                    c.style.transform = 'translateY(0)';
+                }, 120 * i);
+            });
+        });
+    </script>
 </body>
 </html>
