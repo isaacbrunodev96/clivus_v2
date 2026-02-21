@@ -112,6 +112,60 @@
         </div>
     </div>
     @endif
+    <!-- Empresas (CNPJ) -->
+    @php
+        $companies = $user->companies ?? collect();
+    @endphp
+    <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+        <h2 class="text-2xl font-bold mb-4">Empresas (CNPJ)</h2>
+        @if($companies->count() > 0)
+            <div class="space-y-3">
+                @foreach($companies as $company)
+                <div class="p-4 rounded-lg" style="background-color: rgb(var(--bg-secondary)); border: 1px solid rgb(var(--border));">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm font-medium">{{ $company->name }}</div>
+                            <div class="text-xs" style="color: rgb(var(--text-secondary));">{{ $company->cnpj }}</div>
+                        </div>
+                        <div>
+                            <a href="#" class="text-sm font-medium" onclick="selectCompany('{{ $company->id }}')">Selecionar</a>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-sm" style="color: rgb(var(--text-secondary));">Nenhuma empresa cadastrada.</p>
+        @endif
+        <div class="mt-4">
+            <h3 class="text-lg font-medium mb-2">Adicionar Empresa</h3>
+            <form action="{{ route('profile.companies.store') }}" method="POST" class="flex gap-3">
+                @csrf
+                <input type="text" name="name" placeholder="Nome da empresa" required class="px-3 py-2 rounded-lg" style="background-color: rgb(var(--bg)); border: 1px solid rgb(var(--border)); color: rgb(var(--text));">
+                <input type="text" name="cnpj" placeholder="CNPJ (opcional)" class="px-3 py-2 rounded-lg" style="background-color: rgb(var(--bg)); border: 1px solid rgb(var(--border)); color: rgb(var(--text));">
+                <button type="submit" class="px-4 py-2 rounded-lg text-white" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark)));">Adicionar</button>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script id="profile-company-select">
+    function selectCompany(id) {
+        localStorage.setItem('selectedEntityType', 'cnpj');
+        localStorage.setItem('selectedCompanyId', id);
+        // Try to update header selects if present
+        const typeSelect = document.getElementById('entity-type-select');
+        const companySelect = document.getElementById('company-select');
+        if (typeSelect) typeSelect.value = 'cnpj';
+        if (companySelect) {
+            companySelect.value = id;
+            companySelect.classList.remove('hidden');
+        }
+        document.dispatchEvent(new CustomEvent('entitySelectionChanged', { detail: { type: 'cnpj', companyId: id }}));
+        alert('Empresa selecionada para filtro: ' + id);
+    }
+</script>
+@endpush
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="carbon-pro" data-color-mode="light">
+<html lang="pt-BR" data-theme="carbon-pro" data-color-mode="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,15 +19,21 @@
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
         }
         [data-theme="carbon-pro"][data-color-mode="dark"] {
-            --primary: 167 139 250;
-            --primary-dark: 139 92 246;
-            --bg: 17 24 39;
-            --bg-secondary: 31 41 55;
-            --text: 243 244 246;
-            --text-secondary: 156 163 175;
-            --border: 55 65 81;
-            --card: 31 41 55;
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+            /* Premium dark palette inspired by reference */
+            --primary: 124 58 237; /* rich purple */
+            --primary-dark: 79 70 229;
+            --success: 34 197 94;
+            --danger: 239 68 68;
+            --warning: 251 191 36;
+            --info: 59 130 246;
+
+            --bg: 10 12 15;
+            --bg-secondary: 18 22 28;
+            --card: 17 20 24;
+            --text: 238 242 246;
+            --text-secondary: 138 152 170;
+            --border: 30 36 44;
+            --shadow: 0 10px 30px rgba(2,6,23,0.6);
         }
         [data-theme="neo-glass"] {
             --primary: 99 102 241;
@@ -41,26 +47,36 @@
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
         [data-theme="neo-glass"][data-color-mode="dark"] {
-            --primary: 129 140 248;
+            --primary: 116 66 255;
             --primary-dark: 99 102 241;
-            --bg: 15 23 42;
-            --bg-secondary: 30 41 59;
+            --success: 34 197 94;
+            --danger: 239 68 68;
+            --warning: 251 191 36;
+            --info: 59 130 246;
+
+            --bg: 12 14 18;
+            --bg-secondary: 20 26 34;
             --text: 241 245 249;
-            --text-secondary: 148 163 184;
-            --border: 51 65 85;
-            --card: rgba(30, 41, 59, 0.8);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --text-secondary: 140 152 170;
+            --border: 36 44 54;
+            --card: rgba(22, 26, 32, 0.9);
+            --shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
         }
         [data-theme="cyber-minimal"] {
-            --primary: 34 197 94;
-            --primary-dark: 22 163 74;
-            --bg: 0 0 0;
-            --bg-secondary: 17 17 17;
-            --text: 255 255 255;
-            --text-secondary: 163 163 163;
-            --border: 38 38 38;
-            --card: 17 17 17;
-            --shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+            --primary: 124 58 237;
+            --primary-dark: 99 102 241;
+            --success: 34 197 94;
+            --danger: 239 68 68;
+            --warning: 251 191 36;
+            --info: 59 130 246;
+
+            --bg: 6 8 10;
+            --bg-secondary: 14 16 20;
+            --text: 250 250 250;
+            --text-secondary: 150 160 175;
+            --border: 28 28 30;
+            --card: 14 16 20;
+            --shadow: 0 8px 28px rgba(0,0,0,0.6);
         }
         [data-theme="cyber-minimal"][data-color-mode="light"] {
             --primary: 22 163 74;
@@ -85,15 +101,20 @@
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
         }
         [data-theme="material-you"][data-color-mode="dark"] {
-            --primary: 208 188 255;
-            --primary-dark: 186 160 255;
-            --bg: 28 28 30;
-            --bg-secondary: 44 44 46;
-            --text: 255 255 255;
-            --text-secondary: 174 174 178;
-            --border: 58 58 60;
-            --card: 44 44 46;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --primary: 150 120 255;
+            --primary-dark: 124 58 237;
+            --success: 34 197 94;
+            --danger: 239 68 68;
+            --warning: 251 191 36;
+            --info: 59 130 246;
+
+            --bg: 14 14 16;
+            --bg-secondary: 28 30 34;
+            --text: 250 250 250;
+            --text-secondary: 160 170 185;
+            --border: 44 44 48;
+            --card: 28 30 34;
+            --shadow: 0 8px 24px rgba(2,6,23,0.55);
         }
         [data-theme="ocean-clivus"] {
             --primary: 14 165 233;
@@ -107,15 +128,20 @@
             --shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.1);
         }
         [data-theme="ocean-clivus"][data-color-mode="dark"] {
-            --primary: 56 189 248;
-            --primary-dark: 14 165 233;
-            --bg: 15 23 42;
-            --bg-secondary: 30 58 138;
-            --text: 241 245 249;
+            --primary: 98 60 234;
+            --primary-dark: 56 189 248;
+            --success: 34 197 94;
+            --danger: 239 68 68;
+            --warning: 251 191 36;
+            --info: 59 130 246;
+
+            --bg: 12 16 22;
+            --bg-secondary: 22 34 48;
+            --text: 243 245 248;
             --text-secondary: 148 163 184;
-            --border: 51 65 85;
-            --card: 30 58 138;
-            --shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.2);
+            --border: 36 48 66;
+            --card: 18 26 40;
+            --shadow: 0 10px 30px rgba(2,6,23,0.5);
         }
         [data-theme="padrao"] {
             --primary: 59 130 246;
@@ -129,15 +155,20 @@
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
         }
         [data-theme="padrao"][data-color-mode="dark"] {
-            --primary: 96 165 250;
-            --primary-dark: 59 130 246;
-            --bg: 17 24 39;
-            --bg-secondary: 31 41 55;
-            --text: 243 244 246;
-            --text-secondary: 156 163 175;
-            --border: 55 65 81;
-            --card: 31 41 55;
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+            --primary: 116 66 255;
+            --primary-dark: 96 165 250;
+            --success: 34 197 94;
+            --danger: 239 68 68;
+            --warning: 251 191 36;
+            --info: 59 130 246;
+
+            --bg: 12 14 18;
+            --bg-secondary: 22 28 36;
+            --text: 244 246 249;
+            --text-secondary: 150 160 175;
+            --border: 36 44 54;
+            --card: 18 22 28;
+            --shadow: 0 8px 24px rgba(2,6,23,0.5);
         }
     </style>
 </head>
@@ -373,6 +404,17 @@
                         <h1 class="text-2xl font-bold">@yield('page-title', 'Dashboard')</h1>
                     </div>
                     <div class="flex items-center gap-3">
+                        <!-- Entity selector: CPF / CNPJ and optional company selector -->
+                        <div class="flex items-center gap-2 mr-2">
+                            <select id="entity-type-select" class="px-3 py-2 rounded-lg text-sm" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); color: rgb(var(--text));">
+                                <option value="cpf">Pessoa Física (CPF)</option>
+                                <option value="cnpj">Pessoa Jurídica (CNPJ)</option>
+                            </select>
+                            <select id="company-select" class="px-3 py-2 rounded-lg text-sm hidden" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); color: rgb(var(--text)); min-width: 220px;">
+                                <!-- populated by JS -->
+                            </select>
+                            <a id="add-company-link" href="#" class="ml-2 text-sm hidden" style="color: rgb(var(--primary)); text-decoration: underline;">Adicionar empresa</a>
+                        </div>
                         <!-- Theme Selector -->
                         <div class="relative">
                             <button id="theme-toggle" class="p-2 rounded-lg hover:bg-opacity-50 transition-colors" style="background-color: rgba(var(--primary), 0.1);">
@@ -463,12 +505,21 @@
         const themes = ['neo-glass', 'cyber-minimal', 'material-you', 'carbon-pro', 'ocean-clivus', 'padrao'];
         const colorModes = ['light', 'dark'];
         
-        // Load saved theme
+        // FORCE default to dark mode on initial load to ensure app always starts dark.
+        // This will still allow the user to toggle afterwards, but initial load is always dark.
+        const forcedDefaultColorMode = 'dark';
+        localStorage.setItem('colorMode', forcedDefaultColorMode);
         const savedTheme = localStorage.getItem('theme') || 'carbon-pro';
-        const savedColorMode = localStorage.getItem('colorMode') || 'light';
-        
+        const savedColorMode = localStorage.getItem('colorMode') || forcedDefaultColorMode;
+
         document.documentElement.setAttribute('data-theme', savedTheme);
         document.documentElement.setAttribute('data-color-mode', savedColorMode);
+        // Ensure Tailwind dark class is present for utilities
+        if (savedColorMode === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
         updateThemeIcon(savedColorMode);
         
         // Theme toggle (light/dark)
@@ -478,6 +529,8 @@
             const newMode = currentMode === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-color-mode', newMode);
             localStorage.setItem('colorMode', newMode);
+            // keep Tailwind's dark class in sync for utilities
+            document.documentElement.classList.toggle('dark', newMode === 'dark');
             updateThemeIcon(newMode);
         });
         
@@ -534,20 +587,284 @@
             mobileOverlay.classList.add('hidden');
         });
     </script>
+    <script>
+        // Entity selection (CPF / CNPJ) handling and persistence (initialized on DOMContentLoaded)
+        document.addEventListener('DOMContentLoaded', function() {
+        (function() {
+            const typeSelect = document.getElementById('entity-type-select');
+            const companySelect = document.getElementById('company-select');
+            let entityInitialized = false;
+
+            // Load companies from server-side (blade will inject JSON below)
+            let companies = [];
+            try {
+                companies = JSON.parse(document.getElementById('user-companies-json')?.textContent || '[]');
+            } catch(e) {
+                companies = [];
+            }
+
+            function populateCompanies() {
+                companySelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Selecionar empresa...';
+                companySelect.appendChild(placeholder);
+                companies.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name + (c.cnpj ? ' — ' + c.cnpj : '');
+                    companySelect.appendChild(opt);
+                });
+            }
+
+            function applySaved() {
+                const savedType = localStorage.getItem('selectedEntityType') || 'cpf';
+                typeSelect.value = savedType;
+                if (savedType === 'cnpj') {
+                    if (companies.length === 0) {
+                        // show empty select with prompt and show add link
+                        companySelect.classList.remove('hidden');
+                        companySelect.innerHTML = '<option value=\"\">Nenhuma empresa cadastrada</option>';
+                        const addLink = document.getElementById('add-company-link');
+                        if (addLink) addLink.classList.remove('hidden');
+                    } else if (companies.length === 1) {
+                        populateCompanies();
+                        companySelect.classList.remove('hidden');
+                        companySelect.value = companies[0].id;
+                        localStorage.setItem('selectedCompanyId', companies[0].id);
+                        const addLink = document.getElementById('add-company-link');
+                        if (addLink) addLink.classList.add('hidden');
+                    } else {
+                        populateCompanies();
+                        companySelect.classList.remove('hidden');
+                        const savedCompany = localStorage.getItem('selectedCompanyId') || '';
+                        if (savedCompany) companySelect.value = savedCompany;
+                        const addLink = document.getElementById('add-company-link');
+                        if (addLink) addLink.classList.add('hidden');
+                    }
+                } else {
+                    companySelect.classList.add('hidden');
+                    localStorage.removeItem('selectedCompanyId');
+                    const addLink = document.getElementById('add-company-link');
+                    if (addLink) addLink.classList.add('hidden');
+                }
+                dispatchEntityChange();
+
+                // Persist server-side as well only after initialization to avoid reload loops
+                if (!entityInitialized) {
+                    return;
+                }
+                try {
+                    fetch("{{ route('user.selection.store') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content
+                        },
+                        body: JSON.stringify({ type: savedType, company_id: localStorage.getItem('selectedCompanyId') || null })
+                    }).then(res => {
+                        // If user selected CNPJ but has no companies, redirect to profile to create one
+                if (savedType === 'cnpj' && (companies.length === 0)) {
+                            // show company select as empty and show add-company link instead of redirecting
+                            companySelect.classList.remove('hidden');
+                            companySelect.innerHTML = '<option value=\"\">Nenhuma empresa cadastrada</option>';
+                            const addLink = document.getElementById('add-company-link');
+                            if (addLink) addLink.classList.remove('hidden');
+                            return;
+                        } else {
+                            const addLink = document.getElementById('add-company-link');
+                            if (addLink) addLink.classList.add('hidden');
+                        }
+                        // reload to let server-side session affect data queries
+                        window.location.reload();
+                    }).catch(()=>{});
+                } catch(e) {}
+            }
+
+            function dispatchEntityChange() {
+                const detail = {
+                    type: typeSelect.value,
+                    companyId: companySelect.value || null
+                };
+                // expose globally
+                window.selectedEntity = detail;
+                localStorage.setItem('selectedEntityType', detail.type);
+                if (detail.companyId) localStorage.setItem('selectedCompanyId', detail.companyId);
+                document.dispatchEvent(new CustomEvent('entitySelectionChanged', { detail }));
+                // Fill hidden inputs in forms with class .entity-selection
+                document.querySelectorAll('form .entity-selection').forEach(el => {
+                    el.value = detail.type === 'cpf' ? (localStorage.getItem('selectedCpf') || '') : (detail.companyId || '');
+                });
+            }
+
+            typeSelect.addEventListener('change', (e) => {
+                localStorage.setItem('selectedEntityType', e.target.value);
+                applySaved();
+            });
+
+            companySelect.addEventListener('change', (e) => {
+                localStorage.setItem('selectedCompanyId', e.target.value);
+                dispatchEntityChange();
+                // persist server-side
+                try {
+                    fetch("{{ route('user.selection.store') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content
+                        },
+                        body: JSON.stringify({ type: localStorage.getItem('selectedEntityType') || 'cnpj', company_id: e.target.value || null })
+                    }).then(() => {
+                        window.location.reload();
+                    }).catch(()=>{});
+                } catch(e) {}
+            });
+
+            // Initialize (do not sync server on initial load to avoid reload loop)
+            applySaved();
+            entityInitialized = true;
+            // expose helper
+            window.getSelectedEntity = () => {
+                return {
+                    type: localStorage.getItem('selectedEntityType') || 'cpf',
+                    companyId: localStorage.getItem('selectedCompanyId') || null,
+                };
+            };
+        })();
+        }); // DOMContentLoaded
+    </script>
+
+    <!-- Modal: Add Company -->
+    <div id="add-company-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: rgba(0,0,0,0.5);">
+        <div class="w-full max-w-md bg-card p-6 rounded-xl card-modal" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); color: rgb(var(--text));">
+            <h3 class="text-lg font-bold mb-4">Adicionar Empresa</h3>
+            <form id="add-company-form" class="space-y-3">
+                <div>
+                    <label class="text-sm mb-1 block">Nome da empresa</label>
+                    <input name="name" required class="w-full px-3 py-2 rounded-lg" style="background-color: rgb(var(--bg)); border: 1px solid rgb(var(--border)); color: rgb(var(--text));">
+                </div>
+                <div>
+                    <label class="text-sm mb-1 block">CNPJ (opcional)</label>
+                    <input name="cnpj" class="w-full px-3 py-2 rounded-lg" style="background-color: rgb(var(--bg)); border: 1px solid rgb(var(--border)); color: rgb(var(--text));">
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" id="cancel-add-company" class="px-4 py-2 rounded-lg" style="background-color: transparent; border:1px solid rgba(var(--border),0.06); color: rgb(var(--text-secondary));">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-white" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark)));">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Add Company modal behavior
+        (function() {
+            const modal = document.getElementById('add-company-modal');
+            const form = document.getElementById('add-company-form');
+            const cancelBtn = document.getElementById('cancel-add-company');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    if (modal) modal.classList.add('hidden');
+                });
+            }
+
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(form);
+                    const payload = Object.fromEntries(formData.entries());
+                    try {
+                        const res = await fetch("{{ route('profile.companies.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) {
+                            const txt = await res.text();
+                            alert('Erro ao criar empresa: ' + res.status);
+                            return;
+                        }
+                        const data = await res.json();
+                        if (data?.status === 'ok' && data.company) {
+                            // select the new company and sync selection to server
+                            localStorage.setItem('selectedEntityType', 'cnpj');
+                            localStorage.setItem('selectedCompanyId', data.company.id);
+                            // persist selection server-side then reload
+                            await fetch("{{ route('user.selection.store') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content
+                                },
+                                body: JSON.stringify({ type: 'cnpj', company_id: data.company.id })
+                            }).catch(()=>{});
+                            window.location.reload();
+                        } else {
+                            alert('Resposta inesperada ao criar empresa.');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Erro ao criar empresa.');
+                    }
+                });
+            }
+        })();
+        // Normalize hardcoded inline colors to theme variables at runtime.
+        document.addEventListener('DOMContentLoaded', () => {
+            const css = getComputedStyle(document.documentElement);
+            const mapping = {
+                'rgb(34, 197, 94)': `rgb(${css.getPropertyValue('--success')})`,
+                'rgba(34, 197, 94, 0.1)': `rgba(${css.getPropertyValue('--success')}, 0.1)`,
+                'rgb(239, 68, 68)': `rgb(${css.getPropertyValue('--danger')})`,
+                'rgba(239, 68, 68, 0.1)': `rgba(${css.getPropertyValue('--danger')}, 0.1)`,
+                'rgb(59, 130, 246)': `rgb(${css.getPropertyValue('--info')})`,
+                'rgb(139, 92, 246)': `rgb(${css.getPropertyValue('--primary')})`,
+                'rgb(124, 58, 237)': `rgb(${css.getPropertyValue('--primary')})`,
+                'rgb(251, 191, 36)': `rgb(${css.getPropertyValue('--warning')})`,
+                'rgba(var(--primary), 0.1)': null // handled by existing uses
+            };
+
+            // Replace occurrences inside inline style attributes
+            document.querySelectorAll('[style]').forEach(el => {
+                let s = el.getAttribute('style');
+                let changed = s;
+                Object.keys(mapping).forEach(key => {
+                    const val = mapping[key];
+                    if (val) changed = changed.split(key).join(val);
+                });
+                if (changed !== s) el.setAttribute('style', changed);
+            });
+
+            // Replace in svg style attributes as well
+            document.querySelectorAll('svg[style]').forEach(svg => {
+                let s = svg.getAttribute('style');
+                let changed = s;
+                Object.keys(mapping).forEach(key => {
+                    const val = mapping[key];
+                    if (val) changed = changed.split(key).join(val);
+                });
+                if (changed !== s) svg.setAttribute('style', changed);
+            });
+        });
+    </script>
+<!-- inject user companies JSON for header script -->
+<script type="application/json" id="user-companies-json">@json(Auth::user() ? Auth::user()->companies->map(function($c){ return ['id'=>$c->id,'name'=>$c->name,'cnpj'=>$c->cnpj]; }) : [])</script>
     <!-- Modal de Módulo Bloqueado -->
     <div id="module-locked-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl transform transition-all" style="background-color: rgb(255, 255, 255);">
+        <div class="rounded-2xl p-8 max-w-md w-full shadow-2xl transform transition-all card modal" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow); color: rgb(var(--text));">
             <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: rgba(239, 68, 68, 0.1);">
-                    <svg class="w-8 h-8" style="color: rgb(239, 68, 68);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: rgba(var(--danger), 0.08);">
+                    <svg class="w-8 h-8" style="color: rgb(var(--danger));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold mb-2" style="color: rgb(17, 24, 39);">Módulo Bloqueado</h3>
-                <p class="text-sm" id="module-locked-name" style="color: rgb(107, 114, 128);"></p>
+                <h3 class="text-2xl font-bold mb-2" style="color: rgb(var(--text));">Módulo Bloqueado</h3>
+                <p class="text-sm" id="module-locked-name" style="color: rgb(var(--text-secondary));"></p>
             </div>
             
-            <p class="text-center mb-6" style="color: rgb(107, 114, 128);">
+            <p class="text-center mb-6" style="color: rgb(var(--text-secondary));">
                 Este módulo não está disponível no seu plano atual. Escolha uma das opções abaixo para desbloquear:
             </p>
             
@@ -555,10 +872,10 @@
                 <a href="{{ route('subscriptions.index') }}" class="block w-full px-6 py-3 rounded-lg font-medium text-white text-center transition-all hover:scale-105" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark)));">
                     Fazer Upgrade de Plano
                 </a>
-                <a href="{{ route('modules.store') }}" class="block w-full px-6 py-3 rounded-lg font-medium text-center transition-colors" style="background-color: rgba(var(--primary), 0.1); color: rgb(var(--primary)); border: 1px solid rgb(var(--primary));">
+                <a href="{{ route('modules.store') }}" class="block w-full px-6 py-3 rounded-lg font-medium text-center transition-colors" style="background-color: rgba(var(--primary), 0.08); color: rgb(var(--primary)); border: 1px solid rgba(var(--primary), 0.18);">
                     Comprar Módulo na Loja
                 </a>
-                <button onclick="closeModuleLockedModal()" class="block w-full px-6 py-3 rounded-lg font-medium text-center transition-colors" style="background-color: rgb(249, 250, 251); color: rgb(107, 114, 128);">
+                <button onclick="closeModuleLockedModal()" class="block w-full px-6 py-3 rounded-lg font-medium text-center transition-colors" style="background-color: transparent; color: rgb(var(--text-secondary)); border: 1px solid rgba(var(--border), 0.06);">
                     Cancelar
                 </button>
             </div>

@@ -89,30 +89,32 @@ class DashboardController extends Controller
             }
         }
 
+        // Apply entity/company filter from session
+        $selectedType = session('selected_entity_type', null);
+        $selectedCompany = session('selected_company_id', null);
+
         // Estatísticas financeiras
-        $accounts = Account::where('user_id', $user->id)->where('active', true)->get();
+        $accountsQuery = Account::where('user_id', $user->id)->where('active', true);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $accountsQuery->where('company_id', $selectedCompany);
+        }
+        $accounts = $accountsQuery->get();
         $totalAccounts = $accounts->count();
         $totalBalance = $accounts->sum('balance');
 
         // Separar saldo por PF e PJ baseado nas contas a pagar/receber
         // Calcular valores pendentes por tipo
-        $payablesPF = Payable::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->where('type', 'Pessoa Física (PF)')
-            ->sum('amount');
-        $payablesPJ = Payable::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->where('type', 'Pessoa Jurídica (PJ)')
-            ->sum('amount');
+        $payablesBase = Payable::where('user_id', $user->id)->where('status', 'pending');
+        $receivablesBase = Receivable::where('user_id', $user->id)->where('status', 'pending');
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $payablesBase->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+            $receivablesBase->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $payablesPF = (clone $payablesBase)->where('type', 'Pessoa Física (PF)')->sum('amount');
+        $payablesPJ = (clone $payablesBase)->where('type', 'Pessoa Jurídica (PJ)')->sum('amount');
         
-        $receivablesPF = Receivable::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->where('type', 'Pessoa Física (PF)')
-            ->sum('amount');
-        $receivablesPJ = Receivable::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->where('type', 'Pessoa Jurídica (PJ)')
-            ->sum('amount');
+        $receivablesPF = (clone $receivablesBase)->where('type', 'Pessoa Física (PF)')->sum('amount');
+        $receivablesPJ = (clone $receivablesBase)->where('type', 'Pessoa Jurídica (PJ)')->sum('amount');
         
         // Calcular saldo líquido por tipo (saldo das contas + receber - pagar)
         // Distribuir saldo total proporcionalmente baseado nas operações
@@ -133,55 +135,77 @@ class DashboardController extends Controller
 
         // Transações do mês atual
         $currentMonth = now()->startOfMonth();
-        $transactions = Transaction::where('user_id', $user->id)
-            ->where('date', '>=', $currentMonth)
-            ->get();
+        $transactionsQuery = Transaction::where('user_id', $user->id)->where('date', '>=', $currentMonth);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            // Transaction has company_id; prefer that, fallback to account relation
+            $transactionsQuery->where(function($q) use ($selectedCompany) {
+                $q->where('company_id', $selectedCompany)
+                  ->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+            });
+        }
+        $transactions = $transactionsQuery->get();
         
         $monthlyRevenue = $transactions->where('type', 'receita')->sum('amount');
         $monthlyExpenses = $transactions->where('type', 'despesa')->sum('amount');
         $monthlyBalance = $monthlyRevenue - $monthlyExpenses;
 
         // Contas a pagar e receber
-        $payables = Payable::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->get();
+        $payablesQuery = Payable::where('user_id', $user->id)->where('status', 'pending');
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $payablesQuery->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $payables = $payablesQuery->get();
         $totalPayables = $payables->sum('amount');
         $overduePayables = $payables->where('due_date', '<', now())->sum('amount');
 
-        $receivables = Receivable::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->get();
+        $receivablesQuery = Receivable::where('user_id', $user->id)->where('status', 'pending');
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $receivablesQuery->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $receivables = $receivablesQuery->get();
         $totalReceivables = $receivables->sum('amount');
         $overdueReceivables = $receivables->where('due_date', '<', now())->sum('amount');
 
         // Próximas contas a pagar (7 dias)
         $next7Days = now()->addDays(7);
-        $upcomingPayables = Payable::where('user_id', $user->id)
+        $upcomingPayablesQuery = Payable::where('user_id', $user->id)
             ->where('status', 'pending')
             ->whereBetween('due_date', [now(), $next7Days])
-            ->orderBy('due_date', 'asc')
-            ->get();
+            ->orderBy('due_date', 'asc');
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $upcomingPayablesQuery->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $upcomingPayables = $upcomingPayablesQuery->get();
 
         // Próximas contas a receber (7 dias)
-        $upcomingReceivables = Receivable::where('user_id', $user->id)
+        $upcomingReceivablesQuery = Receivable::where('user_id', $user->id)
             ->where('status', 'pending')
             ->whereBetween('due_date', [now(), $next7Days])
-            ->orderBy('due_date', 'asc')
-            ->get();
+            ->orderBy('due_date', 'asc');
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $upcomingReceivablesQuery->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $upcomingReceivables = $upcomingReceivablesQuery->get();
 
         // A Receber e A Pagar (30 dias)
         $next30Days = now()->addDays(30);
-        $receivables30d = Receivable::where('user_id', $user->id)
+        $receivables30dQuery = Receivable::where('user_id', $user->id)
             ->where('status', 'pending')
-            ->whereBetween('due_date', [now(), $next30Days])
-            ->get();
+            ->whereBetween('due_date', [now(), $next30Days]);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $receivables30dQuery->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $receivables30d = $receivables30dQuery->get();
         $totalReceivables30d = $receivables30d->sum('amount');
         $countReceivables30d = $receivables30d->count();
 
-        $payables30d = Payable::where('user_id', $user->id)
+        $payables30dQuery = Payable::where('user_id', $user->id)
             ->where('status', 'pending')
-            ->whereBetween('due_date', [now(), $next30Days])
-            ->get();
+            ->whereBetween('due_date', [now(), $next30Days]);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $payables30dQuery->whereHas('account', fn($q) => $q->where('company_id', $selectedCompany));
+        }
+        $payables30d = $payables30dQuery->get();
         $totalPayables30d = $payables30d->sum('amount');
         $countPayables30d = $payables30d->count();
 
@@ -209,11 +233,14 @@ class DashboardController extends Controller
         });
 
         // Transações recentes
-        $recentTransactions = Transaction::where('user_id', $user->id)
-            ->with('account')
-            ->latest('date')
-            ->take(10)
-            ->get();
+        $recentTransactionsQuery = Transaction::where('user_id', $user->id)->with('account')->latest('date')->take(10);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $recentTransactionsQuery->where(function($q) use ($selectedCompany) {
+                $q->where('company_id', $selectedCompany)
+                  ->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+            });
+        }
+        $recentTransactions = $recentTransactionsQuery->get();
 
         // Timeline Financeira - últimos 30 dias por dia
         $timelineStart = now()->subDays(30);
@@ -222,15 +249,20 @@ class DashboardController extends Controller
         $accumulatedBalance = $totalBalance;
         
         for ($date = $timelineStart->copy(); $date->lte($timelineEnd); $date->addDay()) {
-            $dayRevenue = Transaction::where('user_id', $user->id)
+            $dayRevenueQuery = Transaction::where('user_id', $user->id)
                 ->where('type', 'receita')
-                ->whereDate('date', $date->format('Y-m-d'))
-                ->sum('amount');
-            
-            $dayExpense = Transaction::where('user_id', $user->id)
+                ->whereDate('date', $date->format('Y-m-d'));
+            $dayExpenseQuery = Transaction::where('user_id', $user->id)
                 ->where('type', 'despesa')
-                ->whereDate('date', $date->format('Y-m-d'))
-                ->sum('amount');
+                ->whereDate('date', $date->format('Y-m-d'));
+            if ($selectedType === 'cnpj' && $selectedCompany) {
+                $dayRevenueQuery->where('company_id', $selectedCompany);
+                $dayRevenueQuery->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+                $dayExpenseQuery->where('company_id', $selectedCompany);
+                $dayExpenseQuery->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+            }
+            $dayRevenue = $dayRevenueQuery->sum('amount');
+            $dayExpense = $dayExpenseQuery->sum('amount');
             
             $dayBalance = $dayRevenue - $dayExpense;
             $accumulatedBalance += $dayBalance;
@@ -251,15 +283,20 @@ class DashboardController extends Controller
             $monthStart = $month->copy()->startOfMonth();
             $monthEnd = $month->copy()->endOfMonth();
             
-            $revenue = Transaction::where('user_id', $user->id)
+            $revenueQuery = Transaction::where('user_id', $user->id)
                 ->where('type', 'receita')
-                ->whereBetween('date', [$monthStart, $monthEnd])
-                ->sum('amount');
-            
-            $expense = Transaction::where('user_id', $user->id)
+                ->whereBetween('date', [$monthStart, $monthEnd]);
+            $expenseQuery = Transaction::where('user_id', $user->id)
                 ->where('type', 'despesa')
-                ->whereBetween('date', [$monthStart, $monthEnd])
-                ->sum('amount');
+                ->whereBetween('date', [$monthStart, $monthEnd]);
+            if ($selectedType === 'cnpj' && $selectedCompany) {
+                $revenueQuery->where('company_id', $selectedCompany);
+                $revenueQuery->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+                $expenseQuery->where('company_id', $selectedCompany);
+                $expenseQuery->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+            }
+            $revenue = $revenueQuery->sum('amount');
+            $expense = $expenseQuery->sum('amount');
             
             $monthlyData[] = [
                 'month' => $month->format('M/Y'),
@@ -270,9 +307,15 @@ class DashboardController extends Controller
         }
 
         // Distribuição por método de pagamento (últimos 30 dias)
-        $paymentMethodData = Transaction::where('user_id', $user->id)
-            ->where('date', '>=', now()->subDays(30))
-            ->selectRaw('payment_method, SUM(amount) as total')
+        $paymentMethodQuery = Transaction::where('user_id', $user->id)
+            ->where('date', '>=', now()->subDays(30));
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $paymentMethodQuery->where(function($q) use ($selectedCompany) {
+                $q->where('company_id', $selectedCompany)
+                  ->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+            });
+        }
+        $paymentMethodData = $paymentMethodQuery->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->get()
             ->map(function($item) {
@@ -285,10 +328,16 @@ class DashboardController extends Controller
             ->values();
 
         // Distribuição por conta (últimos 30 dias)
-        $accountDistributionData = Transaction::where('user_id', $user->id)
+        $accountDistributionQuery = Transaction::where('user_id', $user->id)
             ->where('date', '>=', now()->subDays(30))
-            ->with('account')
-            ->get()
+            ->with('account');
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $accountDistributionQuery->where(function($q) use ($selectedCompany) {
+                $q->where('company_id', $selectedCompany)
+                  ->orWhereHas('account', fn($aq) => $aq->where('company_id', $selectedCompany));
+            });
+        }
+        $accountDistributionData = $accountDistributionQuery->get()
             ->groupBy('account_id')
             ->map(function($transactions, $accountId) {
                 $account = $transactions->first()->account;

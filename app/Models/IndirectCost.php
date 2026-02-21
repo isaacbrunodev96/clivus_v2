@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Scopes\EntityScope;
 
 class IndirectCost extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope(new EntityScope);
+    }
     protected $fillable = [
         'user_id',
         'description',

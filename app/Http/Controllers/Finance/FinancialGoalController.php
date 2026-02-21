@@ -12,9 +12,14 @@ class FinancialGoalController extends Controller
 {
     public function index()
     {
-        $goals = FinancialGoal::where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = FinancialGoal::where('user_id', Auth::id())->orderBy('created_at', 'desc');
+        $selectedType = session('selected_entity_type', null);
+        if ($selectedType === 'cnpj') {
+            $query->where('scope', 'PJ');
+        } else {
+            $query->where('scope', 'PF');
+        }
+        $goals = $query->get();
 
         $activeGoals = $goals->where('status', 'active');
         $totalRevenue = $activeGoals->where('type', 'Receita')->sum('current_value');

@@ -22,6 +22,15 @@ class TransactionController extends Controller
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
+        // Apply selection-based filters (CPF / CNPJ)
+        $selectedType = session('selected_entity_type', null);
+        $selectedCompany = session('selected_company_id', null);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $query->whereHas('account', function($q) use ($selectedCompany) {
+                $q->where('company_id', $selectedCompany);
+            });
+        }
+
         if ($request->has('account_id') && $request->account_id) {
             $query->where('account_id', $request->account_id);
         }
@@ -92,6 +101,19 @@ class TransactionController extends Controller
 
         DB::transaction(function () use ($validated, $account) {
             $validated['user_id'] = Auth::id();
+            $selectedType = session('selected_entity_type', null);
+            $selectedCompany = session('selected_company_id', null);
+
+            if ($selectedType === 'cnpj') {
+                $companyId = $account->company_id ?? $selectedCompany;
+                if (empty($companyId)) {
+                    throw new \Exception('Empresa (CNPJ) não selecionada ou conta não vinculada a empresa.');
+                }
+                $validated['company_id'] = $companyId;
+            } else {
+                $validated['company_id'] = null;
+            }
+
             $transaction = Transaction::create($validated);
 
             // Atualizar saldo da conta

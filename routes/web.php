@@ -64,6 +64,8 @@ Route::middleware(['auth'])->group(function () {
     // Perfil
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('user/selection', [\App\Http\Controllers\UserSelectionController::class, 'store'])->name('user.selection.store');
+    Route::post('profile/companies', [\App\Http\Controllers\CompanyController::class, 'store'])->name('profile.companies.store');
     
     // Assinaturas
     Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');

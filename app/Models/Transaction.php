@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Scopes\EntityScope;
 
 class Transaction extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope(new EntityScope);
+    }
     protected $fillable = [
         'account_id',
         'user_id',
@@ -16,6 +21,7 @@ class Transaction extends Model
         'amount',
         'date',
         'notes',
+        'company_id',
     ];
 
     protected $casts = [

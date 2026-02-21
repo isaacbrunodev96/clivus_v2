@@ -5,7 +5,118 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* Custom design tokens and global style overrides (dark-first) */
+:root {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Radius tokens (use in overrides to make corners rounded/premium) */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Elevation */
+  --elevation-1: 0 1px 3px rgba(0,0,0,0.06);
+  --elevation-2: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* Utility: make rounded-* classes use our radius tokens for a consistent look */
+.rounded-sm { border-radius: var(--radius-sm) !important; }
+.rounded { border-radius: var(--radius-sm) !important; }
+.rounded-md, .rounded-lg { border-radius: var(--radius-md) !important; }
+.rounded-xl { border-radius: var(--radius-lg) !important; }
+.rounded-2xl { border-radius: var(--radius-xl) !important; }
+
+/* Card helper used across templates (non-invasive: respects existing markup) */
+.card {
+  background-color: rgb(var(--card));
+  border: 1px solid rgb(var(--border));
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-md);
+}
+
+/* Ensure body follows theme tokens (layouts already sets --* variables on html[data-theme]) */
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--text));
+  font-family: var(--font-sans);
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+/* Small tweaks for interactive elements to feel premium */
+a, button {
+  transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+/* Make modal/dialogs slightly larger radius and elevated */
+.modal, .dialog, .card-modal {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+}
+
+/* Minimalist green scrollbar for sidebars (Webkit + Firefox) */
+aside, #mobile-sidebar, nav {
+  scrollbar-width: thin;
+  /* thumb color, track color */
+  scrollbar-color: rgb(var(--success)) transparent;
+}
+
+/* WebKit browsers */
+aside::-webkit-scrollbar, #mobile-sidebar::-webkit-scrollbar, nav::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* transparent track (no white) */
+aside::-webkit-scrollbar-track, #mobile-sidebar::-webkit-scrollbar-track, nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* green thumb in theme tone, with subtle white border for contrast */
+aside::-webkit-scrollbar-thumb, #mobile-sidebar::-webkit-scrollbar-thumb, nav::-webkit-scrollbar-thumb {
+  background: rgb(var(--success));
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.06); /* subtle outline */
+  background-clip: padding-box;
+  min-height: 28px;
+}
+
+/* hover/focus state slightly brighter */
+aside::-webkit-scrollbar-thumb:hover, #mobile-sidebar::-webkit-scrollbar-thumb:hover, nav::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:active, #mobile-sidebar::-webkit-scrollbar-thumb:active, nav::-webkit-scrollbar-thumb:active {
+  background: rgba(var(--success), 1);
+  box-shadow: 0 0 0 4px rgba(var(--success), 0.06);
+}
+
+/* corner should be transparent to avoid white square at intersection */
+aside::-webkit-scrollbar-corner, #mobile-sidebar::-webkit-scrollbar-corner, nav::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Modal form controls styling to match dark theme */
+.modal input, .modal textarea, .modal select, .modal .form-control {
+  background-color: rgb(var(--bg-secondary));
+  color: rgb(var(--text));
+  border: 1px solid rgba(var(--border), 0.6);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  box-shadow: none;
+}
+
+.modal input::placeholder, .modal textarea::placeholder {
+  color: rgb(var(--text-secondary));
+}
+
+/* Ensure modal internal scrollbars are transparent and match theme */
+.modal::-webkit-scrollbar, .modal ::-webkit-scrollbar {
+  width: 8px;
+}
+.modal::-webkit-scrollbar-track, .modal ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal::-webkit-scrollbar-thumb, .modal ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
 }

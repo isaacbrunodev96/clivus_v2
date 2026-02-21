@@ -10,6 +10,7 @@
         
         <form action="{{ route('finance.accounts.store') }}" method="POST" class="space-y-6">
             @csrf
+            <input type="hidden" name="entity_selection" class="entity-selection" value="">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">

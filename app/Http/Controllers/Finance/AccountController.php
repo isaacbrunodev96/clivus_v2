@@ -15,10 +15,18 @@ class AccountController extends Controller
      */
     public function index()
     {
-        $accounts = Account::where('user_id', Auth::id())
+        $query = Account::where('user_id', Auth::id())
             ->where('active', true)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        // Apply CNPJ selection filter if set
+        $selectedType = session('selected_entity_type', null);
+        $selectedCompany = session('selected_company_id', null);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $query->where('company_id', $selectedCompany);
+        }
+
+        $accounts = $query->get();
 
         return view('finance.accounts.index', compact('accounts'));
     }
@@ -44,12 +52,30 @@ class AccountController extends Controller
             'account_number' => 'nullable|string|max:50',
             'holder' => 'nullable|string|max:255',
             'cpf' => 'nullable|string|max:20',
+            'company_id' => 'nullable|exists:companies,id',
             'pix_key' => 'nullable|string|max:255',
             'balance' => 'nullable|numeric|min:0',
         ]);
 
         $validated['user_id'] = Auth::id();
         $validated['balance'] = $validated['balance'] ?? 0;
+        // Enforce separation CPF vs CNPJ based on selection (session)
+        $selectedType = session('selected_entity_type', null);
+        $selectedCompany = session('selected_company_id', null);
+
+        if ($selectedType === 'cnpj') {
+            // For CNPJ selection we must associate with a company
+            $companyId = $validated['company_id'] ?? $selectedCompany;
+            if (empty($companyId)) {
+                return redirect()->back()->withErrors(['company_id' => 'Selecione ou cadastre uma empresa (CNPJ) antes de criar conta empresarial.'])->withInput();
+            }
+            $validated['company_id'] = $companyId;
+            // Clear CPF when creating company-associated account
+            $validated['cpf'] = null;
+        } else {
+            // CPF/default: ensure no company is attached
+            $validated['company_id'] = null;
+        }
 
         Account::create($validated);
 
@@ -93,6 +119,19 @@ class AccountController extends Controller
             'pix_key' => 'nullable|string|max:255',
             'balance' => 'nullable|numeric|min:0',
         ]);
+
+        // Enforce separation CPF vs CNPJ on update too
+        $selectedType = session('selected_entity_type', null);
+        $selectedCompany = session('selected_company_id', null);
+        if ($selectedType === 'cnpj') {
+            $validated['company_id'] = $validated['company_id'] ?? $selectedCompany;
+            if (empty($validated['company_id'])) {
+                return redirect()->back()->withErrors(['company_id' => 'Selecione uma empresa (CNPJ) antes de associar esta conta.'])->withInput();
+            }
+            $validated['cpf'] = null;
+        } else {
+            $validated['company_id'] = null;
+        }
 
         $account->update($validated);
 

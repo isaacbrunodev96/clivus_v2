@@ -5,9 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Scopes\EntityScope;
 
 class Contact extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope(new EntityScope);
+    }
     protected $fillable = [
         'user_id',
         'name',

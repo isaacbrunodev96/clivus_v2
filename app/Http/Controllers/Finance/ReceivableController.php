@@ -23,6 +23,15 @@ class ReceivableController extends Controller
             ->orderBy('due_date', 'desc')
             ->orderBy('created_at', 'desc');
 
+        // Apply selection-based company filter
+        $selectedType = session('selected_entity_type', null);
+        $selectedCompany = session('selected_company_id', null);
+        if ($selectedType === 'cnpj' && $selectedCompany) {
+            $query->whereHas('account', function($q) use ($selectedCompany) {
+                $q->where('company_id', $selectedCompany);
+            });
+        }
+
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
@@ -89,6 +98,18 @@ class ReceivableController extends Controller
 
         $validated['user_id'] = Auth::id();
         $validated['status'] = 'pending';
+        // If CNPJ selected, ensure account (if provided) belongs to selected company
+        if (session('selected_entity_type') === 'cnpj') {
+            $selectedCompany = session('selected_company_id', null);
+            if (!empty($validated['account_id'])) {
+                $account = Account::find($validated['account_id']);
+                if (!$account || $account->company_id != $selectedCompany) {
+                    return redirect()->back()->withErrors(['account_id' => 'Conta inválida para a empresa selecionada.'])->withInput();
+                }
+            } else {
+                // optionally require account for CNPJ workflows
+            }
+        }
 
         Receivable::create($validated);
 

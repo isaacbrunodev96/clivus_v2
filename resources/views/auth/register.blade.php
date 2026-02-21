@@ -14,7 +14,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));">
     <div class="w-full max-w-md p-6">
-        <div class="rounded-xl p-8 shadow-2xl" style="background-color: #ffffff; border: 1px solid rgba(102, 126, 234, 0.2);">
+        <div class="rounded-xl p-8 shadow-2xl card modal" style="background-color: rgb(var(--card)); border: 1px solid rgba(102, 126, 234, 0.08); color: rgb(var(--text));">
             <div class="text-center mb-8">
                 <div class="inline-block w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold text-2xl mb-4" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark)));">
                     C

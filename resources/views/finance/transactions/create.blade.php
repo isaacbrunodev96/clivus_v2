@@ -10,6 +10,7 @@
         
         <form action="{{ route('finance.transactions.store') }}" method="POST" class="space-y-6">
             @csrf
+            <input type="hidden" name="entity_selection" class="entity-selection" value="">
             
             <div class="space-y-6">
                 <div>

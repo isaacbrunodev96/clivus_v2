@@ -79,11 +79,11 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="flex items-center gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: rgb(34, 197, 94);"></div>
+                    <div class="w-2.5 h-2.5 rounded-full" style="background-color: rgb(var(--success));"></div>
                         <span class="text-xs" style="color: rgb(var(--text-secondary));">Receitas</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: rgb(239, 68, 68);"></div>
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: rgb(var(--danger));"></div>
                         <span class="text-xs" style="color: rgb(var(--text-secondary));">Despesas</span>
                     </div>
                 </div>
@@ -115,11 +115,11 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="flex items-center gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded" style="background-color: rgb(34, 197, 94);"></div>
+                        <div class="w-2.5 h-2.5 rounded" style="background-color: rgb(var(--success));"></div>
                         <span class="text-xs" style="color: rgb(var(--text-secondary));">Receitas</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded" style="background-color: rgb(239, 68, 68);"></div>
+                        <div class="w-2.5 h-2.5 rounded" style="background-color: rgb(var(--danger));"></div>
                         <span class="text-xs" style="color: rgb(var(--text-secondary));">Despesas</span>
                     </div>
                 </div>
@@ -339,24 +339,54 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // Configuração global para linhas finas
-    Chart.defaults.borderWidth = 1.5;
-    Chart.defaults.elements.line.borderWidth = 1.5;
-    Chart.defaults.elements.point.radius = 2.5;
+    // Configuração global para linhas finas e tema de charts
+    Chart.defaults.borderWidth = 1;
+    Chart.defaults.elements.line.borderWidth = 1.2;
+    Chart.defaults.elements.line.tension = 0.38;
+    Chart.defaults.elements.point.radius = 2;
     Chart.defaults.elements.point.hoverRadius = 4;
     Chart.defaults.elements.bar.borderWidth = 0;
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
-    Chart.defaults.plugins.legend.labels.padding = 15;
+    Chart.defaults.plugins.legend.labels.padding = 12;
     Chart.defaults.plugins.legend.labels.font = { size: 11 };
-    Chart.defaults.plugins.tooltip.padding = 12;
-    Chart.defaults.plugins.tooltip.titleFont = { size: 12, weight: 'bold' };
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.titleFont = { size: 12, weight: '600' };
     Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
     Chart.defaults.plugins.tooltip.cornerRadius = 8;
     Chart.defaults.plugins.tooltip.displayColors = true;
     Chart.defaults.plugins.tooltip.boxPadding = 6;
+    // Colors for Chart default text (reads CSS variable)
+    try {
+        const rootCss = getComputedStyle(document.documentElement);
+        Chart.defaults.color = rootCss.getPropertyValue('--text-secondary') || '#9aa8bd';
+    } catch (e) {
+        Chart.defaults.color = '#9aa8bd';
+    }
 
-    const gridColor = 'rgba(128, 128, 128, 0.1)';
-    const textColor = 'rgb(128, 128, 128)';
+    // Compute colors from CSS variables so charts follow theme palette (robustly)
+    const css = getComputedStyle(document.documentElement);
+    const toRgb = (val) => {
+        if (!val) return null;
+        return `rgb(${val.trim().split(/\s+/).join(',')})`;
+    };
+    const toRgba = (val, a) => {
+        if (!val) return null;
+        return `rgba(${val.trim().split(/\s+/).join(',')}, ${a})`;
+    };
+
+    const primary = toRgb(css.getPropertyValue('--primary'));
+    const primaryDark = toRgb(css.getPropertyValue('--primary-dark'));
+    const successColor = toRgb(css.getPropertyValue('--success'));
+    const successBg = toRgba(css.getPropertyValue('--success'), 0.06);
+    const dangerColor = toRgb(css.getPropertyValue('--danger'));
+    const dangerBg = toRgba(css.getPropertyValue('--danger'), 0.06);
+    const warningColor = toRgb(css.getPropertyValue('--warning'));
+    const infoColor = toRgb(css.getPropertyValue('--info'));
+    const infoBg = toRgba(css.getPropertyValue('--info'), 0.08);
+    const cardColor = toRgb(css.getPropertyValue('--card'));
+    const borderVar = css.getPropertyValue('--border');
+    const gridColor = borderVar ? toRgba(borderVar, 0.06) : 'rgba(128,128,128,0.08)';
+    const textColor = toRgb(css.getPropertyValue('--text-secondary')) || 'rgb(150,160,175)';
 
     // Timeline Financeira Chart - Linha Fina
     const timelineCtx = document.getElementById('timelineChart');
@@ -371,10 +401,10 @@
                     {
                         label: 'Receitas',
                         data: timelineData.map(d => d.revenue),
-                        borderColor: 'rgb(34, 197, 94)',
-                        backgroundColor: 'rgba(34, 197, 94, 0.05)',
-                        borderWidth: 1.5,
-                        tension: 0.4,
+                        borderColor: successColor || 'rgb(34,197,94)',
+                        backgroundColor: successBg || 'rgba(34,197,94,0.06)',
+                        borderWidth: 1.2,
+                        tension: 0.38,
                         fill: true,
                         pointRadius: 0,
                         pointHoverRadius: 3,
@@ -382,10 +412,10 @@
                     {
                         label: 'Despesas',
                         data: timelineData.map(d => d.expense),
-                        borderColor: 'rgb(239, 68, 68)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                        borderWidth: 1.5,
-                        tension: 0.4,
+                        borderColor: dangerColor || 'rgb(239,68,68)',
+                        backgroundColor: dangerBg || 'rgba(239,68,68,0.06)',
+                        borderWidth: 1.2,
+                        tension: 0.38,
                         fill: true,
                         pointRadius: 0,
                         pointHoverRadius: 3,
@@ -455,10 +485,10 @@
                 datasets: [{
                     label: 'Saldo',
                     data: balanceData.map(d => d.balance),
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
+                    borderColor: infoColor || 'rgb(59,130,246)',
+                    backgroundColor: infoBg || 'rgba(59,130,246,0.08)',
+                    borderWidth: 1.6,
+                    tension: 0.38,
                     fill: true,
                     pointRadius: 0,
                     pointHoverRadius: 4,
@@ -498,7 +528,7 @@
                         border: { display: false }
                     },
                     x: {
-                        ticks: {
+                    ticks: {
                             color: textColor,
                             font: { size: 10 }
                         },
@@ -523,18 +553,18 @@
                     {
                         label: 'Receitas',
                         data: monthlyData.map(d => d.revenue),
-                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
-                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: toRgba(css.getPropertyValue('--success'), 0.72) || 'rgba(34,197,94,0.7)',
+                        borderColor: successColor || 'rgb(34,197,94)',
                         borderWidth: 1,
-                        borderRadius: 4,
+                        borderRadius: 6,
                     },
                     {
                         label: 'Despesas',
                         data: monthlyData.map(d => d.expense),
-                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: toRgba(css.getPropertyValue('--danger'), 0.72) || 'rgba(239,68,68,0.7)',
+                        borderColor: dangerColor || 'rgb(239,68,68)',
                         borderWidth: 1,
-                        borderRadius: 4,
+                        borderRadius: 6,
                     }
                 ]
             },
@@ -559,7 +589,7 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
+                    ticks: {
                             color: textColor,
                             font: { size: 10 },
                             callback: function(value) {
