@@ -26,6 +26,9 @@ class SettingsController extends Controller
             'mail_encryption' => 'nullable|string',
             'mail_from_address' => 'nullable|email',
             'mail_from_name' => 'nullable|string',
+            'mercadopago_access_token' => 'nullable|string',
+            'mercadopago_public_key' => 'nullable|string',
+            'mercadopago_webhook_token' => 'nullable|string',
         ]);
 
         // Atualizar configurações do Asaas
@@ -38,10 +41,18 @@ class SettingsController extends Controller
 
         // Atualizar configurações de email
         foreach ($validated as $key => $value) {
-            if (str_starts_with($key, 'mail_')) {
+            if (str_starts_with($key, 'mail_') || str_starts_with($key, 'mercadopago_')) {
                 $envKey = strtoupper($key);
                 $this->updateEnv($envKey, $value);
             }
+        }
+
+        // Limpar cache de configuração para aplicar mudanças
+        try {
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            \Illuminate\Support\Facades\Artisan::call('config:cache');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Não foi possível limpar o cache automaticamente: ' . $e->getMessage());
         }
 
         return redirect()->route('admin.settings.index')

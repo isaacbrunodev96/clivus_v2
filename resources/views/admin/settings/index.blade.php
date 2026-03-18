@@ -114,6 +114,41 @@
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));"
                         placeholder="CLIVUS">
                 </div>
+        </div>
+
+        <!-- Configurações do Mercado Pago -->
+        <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
+            <h3 class="text-xl font-bold mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Gateway de Pagamento (Mercado Pago)
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="mercadopago_access_token" class="block text-sm font-medium mb-2">Access Token</label>
+                    <input type="password" id="mercadopago_access_token" name="mercadopago_access_token" value="{{ old('mercadopago_access_token', env('MERCADOPAGO_ACCESS_TOKEN')) }}"
+                        class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+                        style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));"
+                        placeholder="APP_USR-...">
+                </div>
+
+                <div>
+                    <label for="mercadopago_public_key" class="block text-sm font-medium mb-2">Public Key</label>
+                    <input type="text" id="mercadopago_public_key" name="mercadopago_public_key" value="{{ old('mercadopago_public_key', env('MERCADOPAGO_PUBLIC_KEY')) }}"
+                        class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+                        style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));"
+                        placeholder="APP_USR-...">
+                </div>
+
+                <div>
+                    <label for="mercadopago_webhook_token" class="block text-sm font-medium mb-2">Webhook Token (Opcional)</label>
+                    <input type="text" id="mercadopago_webhook_token" name="mercadopago_webhook_token" value="{{ old('mercadopago_webhook_token', env('MERCADOPAGO_WEBHOOK_TOKEN')) }}"
+                        class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+                        style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));"
+                        placeholder="Token de Verificação">
+                </div>
             </div>
         </div>
 
