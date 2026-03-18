@@ -263,7 +263,7 @@
                             ['title' => 'Minhas Assinaturas', 'desc' => 'Gerencie assinaturas de planos e módulos adicionais de forma centralizada.'],
                             ['title' => 'Loja de Módulos', 'desc' => 'Compre funcionalidades adicionais sob demanda e expanda seu sistema conforme a necessidade.'],
                             ['title' => 'Parcelamentos Financeiros', 'desc' => 'Parcelamentos nativos em contas a pagar e receber com controle de periodicidade.'],
-                            ['title' => 'Integração com Gateways', 'desc' => 'Cobranças recorrentes integradas com Asaas, Stripe e outros gateways de pagamento.']
+                            ['title' => 'Integração com Gateways', 'desc' => 'Cobranças recorrentes integradas com Asaas e outros gateways de pagamento.']
                         ];
                     @endphp
 

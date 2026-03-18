@@ -26,6 +26,9 @@ Route::post('register', [\App\Http\Controllers\Auth\RegisterController::class, '
 // Webhook do Asaas (sem autenticação)
 Route::post('webhook/asaas', [\App\Http\Controllers\Webhook\AsaasWebhookController::class, 'handle'])->name('webhook.asaas');
 
+// Webhook do Mercado Pago (sem autenticação)
+Route::post('webhook/mercadopago', [\App\Http\Controllers\Webhook\MercadoPagoWebhookController::class, 'handle'])->name('webhook.mercadopago');
+
 // Callback do Asaas após pagamento (público)
 Route::get('payment/callback', [\App\Http\Controllers\SubscriptionController::class, 'paymentCallback'])->name('payment.callback');
 

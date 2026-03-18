@@ -38,6 +38,13 @@ return [
     'asaas' => [
         'api_key' => env('ASAAS_API_KEY'),
         'sandbox' => env('ASAAS_SANDBOX', true),
+        'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
+    ],
+
+    'mercadopago' => [
+        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
+        'webhook_token' => env('MERCADOPAGO_WEBHOOK_TOKEN'),
     ],
 
 ];
