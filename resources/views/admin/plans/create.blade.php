@@ -53,8 +53,15 @@
                 </div>
                 
                 <div>
-                    <label for="max_accounts" class="block text-sm font-medium mb-2">Máx. Contas</label>
-                    <input type="number" id="max_accounts" name="max_accounts" value="{{ old('max_accounts') }}" min="0"
+                    <label for="max_accounts" class="block text-sm font-medium mb-2">Máx. Contas Bancárias</label>
+                    <input type="number" id="max_accounts" name="max_accounts" value="{{ old('max_accounts', 0) }}" min="0"
+                        class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+                        style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
+                </div>
+
+                <div>
+                    <label for="max_companies" class="block text-sm font-medium mb-2">Máx. Empresas</label>
+                    <input type="number" id="max_companies" name="max_companies" value="{{ old('max_companies', 1) }}" min="1"
                         class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
                 </div>

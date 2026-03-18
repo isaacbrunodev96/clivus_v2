@@ -62,7 +62,7 @@
                     <input type="text" id="search" name="search" value="{{ request('search') }}"
                         class="w-full px-4 py-2 pl-10 rounded-lg border transition-colors focus:outline-none focus:ring-2"
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));"
-                        placeholder="Buscar por descrição, observações, método de pagamento ou conta...">
+                        placeholder="Buscar por descrição, observações, método de pagamento ou conta bancária...">
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style="color: rgb(var(--text-secondary));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
@@ -72,11 +72,11 @@
             <!-- Filtros -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label for="account_id" class="block text-sm font-medium mb-2">Conta</label>
+                    <label for="account_id" class="block text-sm font-medium mb-2">Conta Bancária</label>
                     <select id="account_id" name="account_id"
                         class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                        <option value="">Todas as contas</option>
+                        <option value="">Todas as contas bancárias</option>
                         @foreach($accounts as $account)
                         <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
                             {{ $account->name }}
@@ -260,11 +260,11 @@
                 
                 <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
                     <div>
-                        <label for="transaction_account_id" class="block text-sm font-medium mb-2">Conta *</label>
+                        <label for="transaction_account_id" class="block text-sm font-medium mb-2">Conta Bancária *</label>
                         <select id="transaction_account_id" name="account_id" required
                             class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
                             style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                            <option value="">Selecione uma conta</option>
+                            <option value="">Selecione uma conta bancária</option>
                             @foreach($accounts as $account)
                             <option value="{{ $account->id }}">
                                 {{ $account->name }} - R$ {{ number_format($account->balance, 2, ',', '.') }}

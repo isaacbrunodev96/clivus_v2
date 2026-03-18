@@ -162,7 +162,7 @@
         <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-xl font-bold mb-1">Distribuição por Conta</h2>
+                    <h2 class="text-xl font-bold mb-1">Distribuição por Conta Bancária</h2>
                     <p class="text-xs" style="color: rgb(var(--text-secondary));">Transações (30 dias)</p>
                 </div>
             </div>
@@ -312,7 +312,7 @@
                     <tr style="border-bottom: 1px solid rgb(var(--border));">
                         <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Data</th>
                         <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Descrição</th>
-                        <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Conta</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Conta Bancária</th>
                         <th class="text-right py-3 px-4 text-sm font-medium" style="color: rgb(var(--text-secondary));">Valor</th>
                     </tr>
                 </thead>

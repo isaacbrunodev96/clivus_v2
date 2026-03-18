@@ -74,8 +74,8 @@ class PublicSubscriptionController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'cpf_cnpj' => 'required|string|max:20',
-            'phone' => 'required|string|max:20',
+            'cpf_cnpj' => ['required', 'string', new \App\Rules\CpfCnpj],
+            'phone' => ['required', 'string', new \App\Rules\Phone],
             'payment_gateway' => 'required|in:asaas,mercadopago',
             'billing_type' => 'required_if:payment_gateway,asaas|in:CREDIT_CARD,BOLETO,PIX',
         ]);

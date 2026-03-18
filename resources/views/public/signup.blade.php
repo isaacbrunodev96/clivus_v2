@@ -219,7 +219,7 @@
                                         {{-- Ocultado temporariamente para manter apenas Asaas --}}
                                         <div class="hidden">
                                             <label for="payment_gateway" class="block text-sm font-medium mb-2">Gateway de Pagamento *</label>
-                                            <input type="hidden" name="payment_gateway" value="asaas">
+                                            <input type="hidden" name="payment_gateway" id="payment_gateway" value="asaas">
                                         </div>
 
                                         <div class="md:col-span-2">
@@ -258,6 +258,43 @@
 
                                         gatewaySelect.addEventListener('change', toggleBillingType);
                                         toggleBillingType();
+
+                                        // Masks for CPF/CNPJ and Phone
+                                        const cpfCnpjInput = document.getElementById('cpf_cnpj');
+                                        if (cpfCnpjInput) {
+                                            cpfCnpjInput.addEventListener('input', function(e) {
+                                                let value = e.target.value.replace(/\D/g, '');
+                                                if (value.length <= 11) {
+                                                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                                                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                                                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                                } else {
+                                                    value = value.substring(0, 14);
+                                                    value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+                                                    value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                                    value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                                                    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                                                }
+                                                e.target.value = value;
+                                            });
+                                        }
+
+                                        const phoneInput = document.getElementById('phone');
+                                        if (phoneInput) {
+                                            phoneInput.addEventListener('input', function(e) {
+                                                let value = e.target.value.replace(/\D/g, '');
+                                                if (value.length > 11) value = value.substring(0, 11);
+                                                
+                                                if (value.length <= 10) {
+                                                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                                                    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                                                } else {
+                                                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                                                    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                                                }
+                                                e.target.value = value;
+                                            });
+                                        }
                                     });
                                 </script>
 

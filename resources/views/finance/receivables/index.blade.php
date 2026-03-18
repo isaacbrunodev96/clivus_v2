@@ -83,11 +83,11 @@
                 </div>
                 
                 <div>
-                    <label for="account_id" class="block text-sm font-medium mb-2">Conta</label>
+                    <label for="account_id" class="block text-sm font-medium mb-2">Conta Bancária</label>
                     <select id="account_id" name="account_id"
                         class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
                         style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                        <option value="">Todas as contas</option>
+                        <option value="">Todas as contas bancárias</option>
                         @foreach($accounts as $account)
                         <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
                             {{ $account->name }}
@@ -289,11 +289,11 @@
                     </div>
 
                     <div>
-                        <label for="receivable_account_id" class="block text-sm font-medium mb-2">Conta</label>
+                        <label for="receivable_account_id" class="block text-sm font-medium mb-2">Conta Bancária</label>
                         <select id="receivable_account_id" name="account_id"
                             class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
                             style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                            <option value="">Selecione uma conta</option>
+                            <option value="">Selecione uma conta bancária</option>
                             @foreach($accounts as $account)
                             <option value="{{ $account->id }}">{{ $account->name }}</option>
                             @endforeach

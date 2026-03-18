@@ -17,6 +17,7 @@ class Plan extends Model
         'features',
         'allowed_modules',
         'max_accounts',
+        'max_companies',
         'max_transactions_per_month',
         'active',
         'sort_order',
