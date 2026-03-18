@@ -23,5 +23,15 @@ class DatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
             ]
         );
+
+        // Criar Super Admin para produção
+        User::firstOrCreate(
+            ['email' => 'admin@clivus.app.br'],
+            [
+                'name' => 'Super Admin',
+                'password' => bcrypt('Clivus@2026'),
+                'role' => 'super_admin',
+            ]
+        );
     }
 }
