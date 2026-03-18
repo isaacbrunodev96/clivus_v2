@@ -46,6 +46,18 @@
                 </div>
                 
                 <div>
+                    <label for="billing_cycle" class="block text-sm font-medium mb-2">Ciclo de Faturamento *</label>
+                    <select id="billing_cycle" name="billing_cycle" required
+                        class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+                        style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
+                        <option value="monthly" {{ old('billing_cycle') == 'monthly' ? 'selected' : '' }}>Mensal</option>
+                        <option value="yearly" {{ old('billing_cycle') == 'yearly' ? 'selected' : '' }}>Anual</option>
+                        <option value="lifetime" {{ old('billing_cycle') == 'lifetime' ? 'selected' : '' }}>Vitalício (Pagamento Único)</option>
+                        <option value="free" {{ old('billing_cycle') == 'free' ? 'selected' : '' }}>Gratuito</option>
+                    </select>
+                </div>
+                
+                <div>
                     <label for="route_name" class="block text-sm font-medium mb-2">Nome da Rota</label>
                     <input type="text" id="route_name" name="route_name" value="{{ old('route_name') }}"
                         class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"

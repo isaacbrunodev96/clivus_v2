@@ -91,6 +91,11 @@ class AsaasWebhookController extends Controller
         // Se temos subscription_id, buscar diretamente
         if ($subscriptionId) {
             $subscription = Subscription::where('asaas_subscription_id', $subscriptionId)->first();
+            
+            // Se não encontrou na tabela de assinaturas (planos), pode ser uma assinatura de módulo
+            if (!$subscription && !$userModule) {
+                $userModule = UserModule::where('subscription_id', $subscriptionId)->first();
+            }
         }
         
         // Se não encontrou e temos customer_id, buscar pela assinatura mais recente pendente do cliente

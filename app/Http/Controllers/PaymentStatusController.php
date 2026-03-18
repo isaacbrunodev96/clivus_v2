@@ -50,11 +50,19 @@ class PaymentStatusController extends Controller
                         // MP costuma notificar via webhook, mas podemos tentar buscar
                         // (O MP não tem uma busca fácil por payment_id sem o token de acesso que já temos)
                         // Para simplificar, deixamos o webhook ativar
-                    } elseif ($userModule->gateway === 'asaas' && $userModule->asaas_payment_id) {
-                        $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
-                        if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                            $userModule->update(['status' => 'active']);
-                            return $this->redirectSuccess($request);
+                    } elseif ($userModule->gateway === 'asaas' && ($userModule->asaas_payment_id || $userModule->subscription_id)) {
+                        if ($userModule->subscription_id) {
+                            $sub = $this->asaasService->getSubscription($userModule->subscription_id);
+                            if ($sub && isset($sub['status']) && $sub['status'] === 'ACTIVE') {
+                                $userModule->update(['status' => 'active']);
+                                return $this->redirectSuccess($request);
+                            }
+                        } else {
+                            $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
+                            if ($payment && isset($payment['status']) && ($payment['status'] === 'CONFIRMED' || $payment['status'] === 'RECEIVED')) {
+                                $userModule->update(['status' => 'active']);
+                                return $this->redirectSuccess($request);
+                            }
                         }
                     }
                 } catch (\Exception $e) {
@@ -145,14 +153,24 @@ class PaymentStatusController extends Controller
         // Verificar módulos
         $pendingModules = UserModule::where('user_id', $user->id)->where('status', 'inactive')->get();
         foreach ($pendingModules as $userModule) {
-            if ($userModule->gateway === 'asaas' && $userModule->asaas_payment_id) {
+            if ($userModule->gateway === 'asaas' && ($userModule->asaas_payment_id || $userModule->subscription_id)) {
                 try {
-                    $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
-                    if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                        $userModule->update(['status' => 'active']);
-                        $updated = true;
-                        $message = 'Módulo ativado com sucesso!';
-                        break;
+                    if ($userModule->subscription_id) {
+                        $sub = $this->asaasService->getSubscription($userModule->subscription_id);
+                        if ($sub && isset($sub['status']) && $sub['status'] === 'ACTIVE') {
+                            $userModule->update(['status' => 'active']);
+                            $updated = true;
+                            $message = "Módulo {$userModule->module->name} ativado com sucesso!";
+                            break;
+                        }
+                    } else {
+                        $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
+                        if ($payment && isset($payment['status']) && ($payment['status'] === 'CONFIRMED' || $payment['status'] === 'RECEIVED')) {
+                            $userModule->update(['status' => 'active']);
+                            $updated = true;
+                            $message = "Módulo {$userModule->module->name} ativado com sucesso!";
+                            break;
+                        }
                     }
                 } catch (\Exception $e) {}
             }

@@ -14,6 +14,7 @@ class Module extends Model
         'route_name',
         'icon',
         'price',
+        'billing_cycle',
         'category',
         'active',
         'sort_order',

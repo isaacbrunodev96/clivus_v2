@@ -48,22 +48,35 @@
                             </span>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold" style="color: rgb(var(--primary));">R$ {{ number_format($module->price, 2, ',', '.') }}</p>
+                            @if($module->billing_cycle === 'free')
+                                <p class="text-2xl font-bold" style="color: rgb(var(--primary));">Grátis</p>
+                            @else
+                                <p class="text-2xl font-bold" style="color: rgb(var(--primary));">R$ {{ number_format($module->price, 2, ',', '.') }}</p>
+                                <p class="text-xs" style="color: rgb(var(--text-secondary));">
+                                    @if($module->billing_cycle === 'monthly') / mês
+                                    @elseif($module->billing_cycle === 'yearly') / ano
+                                    @else Pagamento Único
+                                    @endif
+                                </p>
+                            @endif
                         </div>
                     </div>
                 </div>
                 
                 <form action="{{ route('modules.purchase', $module) }}" method="POST" id="purchase-form-{{ $module->id }}">
                     @csrf
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium mb-2">Forma de Pagamento</label>
-                        <select name="billing_type" required class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2" style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                            <option value="PIX">PIX</option>
-                            <option value="CREDIT_CARD">Cartão de Crédito</option>
-                        </select>
-                    </div>
+                    @if($module->billing_cycle !== 'free')
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium mb-2">Forma de Pagamento</label>
+                            <select name="billing_type" required class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2" style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
+                                <option value="PIX">PIX</option>
+                                <option value="CREDIT_CARD">Cartão de Crédito</option>
+                                <option value="BOLETO">Boleto</option>
+                            </select>
+                        </div>
+                    @endif
                     <button type="submit" class="w-full px-4 py-2 rounded-lg font-medium text-white transition-all hover:scale-105" style="background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-dark)));">
-                        Adicionar ao Plano
+                        {{ $module->billing_cycle === 'free' ? 'Ativar Agora' : 'Adicionar ao Plano' }}
                     </button>
                 </form>
             </div>

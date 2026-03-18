@@ -25,14 +25,17 @@ class ModuleStoreController extends Controller
     {
         $user = Auth::user();
         
-        // Módulos disponíveis para compra
+        // Módulos disponíveis para compra ou ativação (preço > 0 ou gratuitos)
         $availableModules = Module::where('active', true)
-            ->where('price', '>', 0)
+            ->where(function($query) {
+                $query->where('price', '>', 0)
+                      ->orWhere('billing_cycle', 'free');
+            })
             ->orderBy('category')
             ->orderBy('sort_order')
             ->get();
 
-        // Módulos já comprados pelo usuário
+        // Módulos já comprados ou ativos pelo usuário
         $purchasedModuleIds = $user->userModules()
             ->where('status', 'active')
             ->pluck('module_id')
@@ -61,15 +64,10 @@ class ModuleStoreController extends Controller
     }
 
     /**
-     * Processa a compra de um módulo
+     * Processa a compra ou ativação de um módulo
      */
     public function purchase(Request $request, Module $module)
     {
-        // billing_type supports PIX, CREDIT_CARD, BOLETO
-        $validated = $request->validate([
-            'billing_type' => 'required|in:PIX,CREDIT_CARD,BOLETO',
-        ]);
-
         $user = Auth::user();
 
         // Verificar se já possui o módulo
@@ -80,13 +78,34 @@ class ModuleStoreController extends Controller
 
         if ($existingModule) {
             return redirect()->route('modules.store')
-                ->with('error', 'Você já possui este módulo.');
+                ->with('error', 'Você já possui este módulo ativo.');
         }
 
+        // Se o módulo for gratuito, ativar imediatamente
+        if ($module->billing_cycle === 'free' || $module->price <= 0) {
+            UserModule::updateOrCreate(
+                ['user_id' => $user->id, 'module_id' => $module->id],
+                [
+                    'status' => 'active',
+                    'price_paid' => 0,
+                    'purchased_at' => now(),
+                    'expires_at' => null,
+                ]
+            );
+
+            return redirect()->route('modules.store')
+                ->with('success', "Módulo {$module->name} ativado com sucesso!");
+        }
+
+        // billing_type supports PIX, CREDIT_CARD, BOLETO
+        $validated = $request->validate([
+            'billing_type' => 'required|in:PIX,CREDIT_CARD,BOLETO',
+        ]);
+
         // Verificar se está incluído no plano
-        $subscription = $user->activeSubscription();
-        if ($subscription && $subscription->plan) {
-            $allowedModules = $subscription->plan->allowed_modules ?? [];
+        $subscriptionPlan = $user->activeSubscription();
+        if ($subscriptionPlan && $subscriptionPlan->plan) {
+            $allowedModules = $subscriptionPlan->plan->allowed_modules ?? [];
             if (in_array($module->slug, $allowedModules)) {
                 return redirect()->route('modules.store')
                     ->with('error', 'Este módulo já está incluído no seu plano.');
@@ -99,90 +118,79 @@ class ModuleStoreController extends Controller
                 ->with('error', 'Você precisa ter um plano ativo para comprar módulos adicionais.');
         }
 
-        // Criar assinatura mensal no Asaas (módulos são cobrados por mensalidade)
         try {
-            // URL de retorno após pagamento - página de aguardando que verifica status
             $returnUrl = $this->getPublicUrl(route('modules.payment.callback', ['module' => $module->id]));
-
-            // Verificar se já existe um UserModule pendente para este módulo
-            $existingUserModule = UserModule::where('user_id', $user->id)
-                ->where('module_id', $module->id)
-                ->first();
-
-            if ($existingUserModule && $existingUserModule->status === 'active') {
-                return redirect()->route('modules.store')
-                    ->with('error', 'Você já possui este módulo.');
-            }
-
-            // Criar assinatura recorrente no Asaas
-            $subscription = $this->asaasService->createSubscription([
-                'customer_id' => $user->asaas_customer_id,
-                'billing_type' => $validated['billing_type'],
-                'value' => $module->price,
-                'next_due_date' => now()->addMonth()->format('Y-m-d'),
-                'cycle' => 'MONTHLY',
-                'description' => "Assinatura mensal do módulo: {$module->name}",
-                'subscription_id' => null,
-                'return_url' => $returnUrl,
-            ]);
-
-            if (!$subscription || !isset($subscription['id'])) {
-                throw new \Exception('Erro ao criar assinatura do módulo no Asaas');
-            }
-
-            // Criar ou atualizar registro do módulo do usuário associando a assinatura
-            if ($existingUserModule) {
-                $existingUserModule->update([
-                    'subscription_id' => $subscription['id'] ?? null,
-                    'price_paid' => $module->price,
-                    'asaas_payment_id' => $subscription['id'] ?? null,
-                    'status' => 'inactive',
-                    'purchased_at' => now(),
-                ]);
-            } else {
-                UserModule::create([
-                    'user_id' => $user->id,
-                    'module_id' => $module->id,
-                    'subscription_id' => $subscription['id'] ?? null,
-                    'price_paid' => $module->price,
-                    'asaas_payment_id' => $subscription['id'] ?? null,
-                    'status' => 'inactive',
-                    'purchased_at' => now(),
-                ]);
-            }
-
-            // A assinatura cria automaticamente um pagamento inicial — tentar obter URL
             $paymentUrl = null;
-            sleep(1);
-            $paymentData = $this->asaasService->getSubscriptionPayments($subscription['id']);
-            if ($paymentData && isset($paymentData['invoiceUrl'])) {
-                $paymentUrl = $paymentData['invoiceUrl'];
-            } elseif ($paymentData && isset($paymentData['invoiceNumber'])) {
-                $baseUrl = config('services.asaas.sandbox', true) 
-                    ? 'https://sandbox.asaas.com'
-                    : 'https://www.asaas.com';
-                $paymentUrl = "{$baseUrl}/i/{$paymentData['invoiceNumber']}";
+            $asaasId = null;
+            $isSubscription = in_array($module->billing_cycle, ['monthly', 'yearly']);
+
+            if ($isSubscription) {
+                // Criar assinatura recorrente (Mensal ou Anual)
+                $cycle = $module->billing_cycle === 'yearly' ? 'YEARLY' : 'MONTHLY';
+                $asaasResult = $this->asaasService->createSubscription([
+                    'customer_id' => $user->asaas_customer_id,
+                    'billing_type' => $validated['billing_type'],
+                    'value' => $module->price,
+                    'next_due_date' => now()->addDays(3)->format('Y-m-d'),
+                    'cycle' => $cycle,
+                    'description' => "Assinatura {$module->billing_cycle} do módulo: {$module->name}",
+                    'return_url' => $returnUrl,
+                ]);
+                
+                if ($asaasResult && isset($asaasResult['id'])) {
+                    $asaasId = $asaasResult['id'];
+                    // Obter o primeiro pagamento da assinatura
+                    sleep(1);
+                    $paymentData = $this->asaasService->getSubscriptionPayments($asaasId);
+                    if ($paymentData && isset($paymentData['invoiceUrl'])) {
+                        $paymentUrl = $paymentData['invoiceUrl'];
+                    }
+                }
+            } else {
+                // Pagamento Vitalício (Evento Único)
+                $asaasResult = $this->asaasService->createPayment([
+                    'customer_id' => $user->asaas_customer_id,
+                    'billing_type' => $validated['billing_type'],
+                    'value' => $module->price,
+                    'due_date' => now()->addDays(3)->format('Y-m-d'),
+                    'description' => "Compra vitalícia do módulo: {$module->name}",
+                    'return_url' => $returnUrl,
+                ]);
+
+                if ($asaasResult && isset($asaasResult['id'])) {
+                    $asaasId = $asaasResult['id'];
+                    $paymentUrl = $asaasResult['invoiceUrl'] ?? $asaasResult['checkoutUrl'] ?? null;
+                }
             }
+
+            if (!$asaasId) {
+                throw new \Exception('Erro ao gerar cobrança no Asaas');
+            }
+
+            // Registrar UserModule
+            UserModule::updateOrCreate(
+                ['user_id' => $user->id, 'module_id' => $module->id],
+                [
+                    'subscription_id' => $isSubscription ? $asaasId : null,
+                    'asaas_payment_id' => !$isSubscription ? $asaasId : null,
+                    'price_paid' => $module->price,
+                    'status' => 'inactive',
+                    'purchased_at' => now(),
+                    'gateway' => 'asaas',
+                ]
+            );
 
             if ($paymentUrl) {
-                session()->put('pending_payment', [
-                    'type' => 'module_subscription',
-                    'module_id' => $module->id,
-                    'subscription_id' => $subscription['id'] ?? null,
-                ]);
                 return redirect($paymentUrl);
             }
 
             return redirect()->route('modules.store')
-                ->with('info', 'Assinatura criada. A ativação será feita quando o pagamento for confirmado.');
+                ->with('info', 'Cobrança gerada. O módulo será ativado após a confirmação do pagamento.');
+
         } catch (\Exception $e) {
-            Log::error('Erro ao processar assinatura de módulo: ' . $e->getMessage(), [
-                'module_id' => $module->id,
-                'user_id' => $user->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Erro ao processar compra de módulo: ' . $e->getMessage());
             return redirect()->route('modules.store')
-                ->with('error', 'Erro ao processar assinatura do módulo: ' . $e->getMessage());
+                ->with('error', 'Erro ao processar compra: ' . $e->getMessage());
         }
     }
 
