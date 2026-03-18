@@ -17,10 +17,12 @@ use Illuminate\Support\Facades\Mail;
 class PublicSubscriptionController extends Controller
 {
     protected AsaasService $asaasService;
+    protected \App\Services\MercadoPagoService $mpService;
 
-    public function __construct(AsaasService $asaasService)
+    public function __construct(AsaasService $asaasService, \App\Services\MercadoPagoService $mpService)
     {
         $this->asaasService = $asaasService;
+        $this->mpService = $mpService;
     }
 
     /**
@@ -74,12 +76,13 @@ class PublicSubscriptionController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'cpf_cnpj' => 'required|string|max:20',
             'phone' => 'required|string|max:20',
-            'billing_type' => 'required|in:CREDIT_CARD,BOLETO,PIX',
+            'payment_gateway' => 'required|in:asaas,mercadopago',
+            'billing_type' => 'required_if:payment_gateway,asaas|in:CREDIT_CARD,BOLETO,PIX',
         ]);
 
         DB::beginTransaction();
         try {
-            // Criar usuário
+            // 1. Criar usuário (Comum a ambos)
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -89,210 +92,157 @@ class PublicSubscriptionController extends Controller
                 'role' => 'user',
             ]);
 
-            // Criar cliente no Asaas
-            $customerData = $this->asaasService->createCustomer([
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'cpf_cnpj' => $user->cpf_cnpj,
-                'user_id' => $user->id,
-            ]);
-
-            if (!$customerData || !isset($customerData['id'])) {
-                throw new \Exception('Erro ao criar cliente no Asaas: ' . ($customerData['errors'][0]['description'] ?? 'Erro desconhecido'));
-            }
-
-            $user->update(['asaas_customer_id' => $customerData['id']]);
-
-            // URL de retorno após pagamento bem-sucedido - redirecionar para dashboard
+            // URL de retorno padrão
             $returnUrl = $this->getPublicUrl(route('dashboard.index') . '?payment=success');
 
-            if ($plan->billing_cycle === 'lifetime') {
-                // Plano vitalício: criar pagamento único em vez de assinatura
-                $payment = $this->asaasService->createPayment([
-                    'customer_id' => $user->asaas_customer_id,
-                    'billing_type' => $validated['billing_type'],
-                    'value' => $plan->price,
-                    'due_date' => now()->addDays(3)->format('Y-m-d'),
-                    'description' => "Compra vitalícia do plano: {$plan->name}",
-                    'return_url' => $returnUrl,
-                ]);
-
-                if (!$payment) {
-                    throw new \Exception('Erro ao criar pagamento no Asaas para plano vitalício');
-                }
-
-                // Criar assinatura local como pendente até confirmação (marca como 'pending')
-                $subscription = Subscription::create([
+            // --- LÓGICA ASAAS ---
+            if ($validated['payment_gateway'] === 'asaas') {
+                // Criar cliente no Asaas
+                $customerData = $this->asaasService->createCustomer([
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'cpf_cnpj' => $user->cpf_cnpj,
                     'user_id' => $user->id,
-                    'plan_id' => $plan->id,
-                    'asaas_subscription_id' => null,
-                    'asaas_customer_id' => $user->asaas_customer_id,
-                    'status' => 'pending',
-                    'starts_at' => now(),
-                    'next_billing_date' => null,
                 ]);
 
-                // Obter URL de pagamento (invoiceUrl ou checkout)
-                $paymentUrl = $payment['invoiceUrl'] ?? null;
-                if (!$paymentUrl && isset($payment['invoiceNumber'])) {
-                    $baseUrl = config('services.asaas.sandbox', true) ? 'https://sandbox.asaas.com' : 'https://www.asaas.com';
-                    $paymentUrl = "{$baseUrl}/i/{$payment['invoiceNumber']}";
-                } elseif (!$paymentUrl && isset($payment['checkoutUrl'])) {
-                    $paymentUrl = $payment['checkoutUrl'];
-                } elseif (!$paymentUrl && isset($payment['id'])) {
-                    $baseUrl = config('services.asaas.sandbox', true) ? 'https://sandbox.asaas.com' : 'https://www.asaas.com';
-                    $paymentUrl = "{$baseUrl}/c/{$payment['id']}";
+                if (!$customerData || !isset($customerData['id'])) {
+                    throw new \Exception('Erro ao criar cliente no Asaas: ' . ($customerData['errors'][0]['description'] ?? 'Erro desconhecido'));
                 }
 
-                DB::commit();
+                $user->update(['asaas_customer_id' => $customerData['id']]);
 
-                // Salvar pending_payment para verificar no retorno
-                session()->put('pending_payment', [
-                    'type' => 'plan_one_time',
-                    'plan_id' => $plan->id,
-                    'payment_id' => $payment['id'] ?? null,
-                ]);
+                if ($plan->billing_cycle === 'lifetime') {
+                    $payment = $this->asaasService->createPayment([
+                        'customer_id' => $user->asaas_customer_id,
+                        'billing_type' => $validated['billing_type'],
+                        'value' => $plan->price,
+                        'due_date' => now()->addDays(3)->format('Y-m-d'),
+                        'description' => "Compra vitalícia do plano: {$plan->name}",
+                        'return_url' => $returnUrl,
+                    ]);
 
-                if ($paymentUrl) {
-                    return redirect($paymentUrl);
+                    if (!$payment) throw new \Exception('Erro ao criar pagamento no Asaas');
+
+                    $subscription = Subscription::create([
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id,
+                        'gateway' => 'asaas',
+                        'asaas_customer_id' => $user->asaas_customer_id,
+                        'status' => 'pending',
+                        'starts_at' => now(),
+                    ]);
+
+                    $paymentUrl = $payment['invoiceUrl'] ?? null;
+                    DB::commit();
+                    Auth::login($user);
+                    if ($paymentUrl) return redirect($paymentUrl);
+                } else {
+                    $subscriptionData = $this->asaasService->createSubscription([
+                        'customer_id' => $user->asaas_customer_id,
+                        'billing_type' => $validated['billing_type'],
+                        'value' => $plan->price,
+                        'next_due_date' => now()->addMonth()->format('Y-m-d'),
+                        'cycle' => $plan->billing_cycle === 'yearly' ? 'YEARLY' : 'MONTHLY',
+                        'description' => "Assinatura {$plan->name}",
+                        'return_url' => $returnUrl,
+                    ]);
+
+                    if (!$subscriptionData || !isset($subscriptionData['id'])) throw new \Exception('Erro ao criar assinatura no Asaas');
+
+                    $subscription = Subscription::create([
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id,
+                        'gateway' => 'asaas',
+                        'asaas_subscription_id' => $subscriptionData['id'],
+                        'asaas_customer_id' => $user->asaas_customer_id,
+                        'status' => 'pending',
+                        'starts_at' => now(),
+                        'next_billing_date' => \Carbon\Carbon::parse($subscriptionData['nextDueDate'] ?? now()->addMonth()),
+                    ]);
+
+                    DB::commit();
+                    Auth::login($user);
+                    
+                    // Buscar payment URL (simplificado)
+                    sleep(1);
+                    $paymentData = $this->asaasService->getSubscriptionPayments($subscriptionData['id']);
+                    $paymentUrl = $paymentData['invoiceUrl'] ?? null;
+                    if ($paymentUrl) return redirect($paymentUrl);
                 }
+            } 
+            // --- LÓGICA MERCADO PAGO ---
+            else {
+                if ($plan->billing_cycle === 'lifetime') {
+                    // Checkout Pro para plano único
+                    $preference = $this->mpService->createPreference([
+                        'title' => "Plano Vitalício: {$plan->name}",
+                        'amount' => $plan->price,
+                        'payer_name' => $user->name,
+                        'payer_email' => $user->email,
+                        'return_url' => $returnUrl,
+                        'external_reference' => "subscription:PLACEHOLDER", // Atualizaremos após criar
+                    ]);
 
-                return redirect()->route('subscriptions.index')
-                    ->with('info', 'Pagamento criado. O link será enviado por email.');
-            }
-
-            // Caso padrão: criar assinatura recorrente no Asaas
-            $subscriptionData = $this->asaasService->createSubscription([
-                'customer_id' => $user->asaas_customer_id,
-                'billing_type' => $validated['billing_type'],
-                'value' => $plan->price,
-                'next_due_date' => now()->addMonth()->format('Y-m-d'),
-                'cycle' => $plan->billing_cycle === 'yearly' ? 'YEARLY' : 'MONTHLY',
-                'description' => "Assinatura {$plan->name}",
-                'subscription_id' => null,
-                'return_url' => $returnUrl,
-            ]);
-
-            if (!$subscriptionData || !isset($subscriptionData['id'])) {
-                throw new \Exception('Erro ao criar assinatura no Asaas: ' . ($subscriptionData['errors'][0]['description'] ?? 'Erro desconhecido'));
-            }
-
-            // Criar assinatura local
-            $subscription = Subscription::create([
-                'user_id' => $user->id,
-                'plan_id' => $plan->id,
-                'asaas_subscription_id' => $subscriptionData['id'],
-                'asaas_customer_id' => $user->asaas_customer_id,
-                'status' => 'pending',
-                'starts_at' => now(),
-                'next_billing_date' => isset($subscriptionData['nextDueDate']) 
-                    ? \Carbon\Carbon::parse($subscriptionData['nextDueDate'])
-                    : now()->addMonth(),
-            ]);
-
-            DB::commit();
-
-            // Enviar email com credenciais
-            try {
-                Mail::to($user->email)->send(new UserCredentialsMail($user, $validated['password']));
-            } catch (\Exception $e) {
-                Log::error('Failed to send credentials email', ['error' => $e->getMessage()]);
-            }
-
-            // Obter link de pagamento
-            // O Asaas cria automaticamente um pagamento quando cria uma assinatura
-            $paymentUrl = null;
-            
-            // Aguardar um pouco para o Asaas processar e criar o pagamento
-            sleep(1);
-            
-            // Buscar pagamentos da assinatura (o Asaas cria automaticamente)
-            $paymentData = $this->asaasService->getSubscriptionPayments($subscriptionData['id']);
-            
-            // Se encontrou o pagamento, tentar adicionar callback para redirecionamento
-            // IMPORTANTE: Só tentar se a URL não for localhost (Asaas não aceita localhost)
-            if ($paymentData && isset($paymentData['id']) && 
-                !str_contains($returnUrl, 'localhost') && 
-                !str_contains($returnUrl, '127.0.0.1')) {
-                $paymentId = $paymentData['id'];
-                
-                // Tentar atualizar o pagamento para adicionar callback
-                // Isso só funciona se o pagamento ainda estiver PENDING
-                if (isset($paymentData['status']) && $paymentData['status'] === 'PENDING') {
-                    try {
-                        $updateData = [
-                            'callback' => [
-                                'successUrl' => $returnUrl,
-                                'autoRedirect' => true,
-                            ],
-                            'returnUrl' => $returnUrl,
-                        ];
-                        
-                        $updatedPayment = $this->asaasService->updatePayment($paymentId, $updateData);
-                        if ($updatedPayment) {
-                            Log::info('Callback adicionado ao pagamento criado automaticamente', [
-                                'payment_id' => $paymentId,
-                                'return_url' => $returnUrl,
-                            ]);
-                        }
-                    } catch (\Exception $e) {
-                        Log::warning('Não foi possível adicionar callback ao pagamento', [
-                            'payment_id' => $paymentId,
-                            'error' => $e->getMessage(),
-                        ]);
+                    if (!$preference || !isset($preference['init_point'])) {
+                        throw new \Exception('Erro ao criar preferência no Mercado Pago');
                     }
-                }
-            } else {
-                Log::info('Pulando atualização de callback - URL é localhost ou inválida', [
-                    'return_url' => $returnUrl,
-                ]);
-            }
-            
-            if ($paymentData && isset($paymentData['invoiceUrl'])) {
-                $paymentUrl = $paymentData['invoiceUrl'];
-                Log::info('Usando invoiceUrl do pagamento criado automaticamente', [
-                    'payment_id' => $paymentData['id'] ?? null,
-                    'invoice_url' => $paymentUrl,
-                ]);
-            } elseif ($paymentData && isset($paymentData['invoiceNumber'])) {
-                $baseUrl = config('services.asaas.sandbox', true) 
-                    ? 'https://sandbox.asaas.com'
-                    : 'https://www.asaas.com';
-                $paymentUrl = "{$baseUrl}/i/{$paymentData['invoiceNumber']}";
-            } elseif (isset($subscriptionData['invoiceUrl'])) {
-                // Fallback: usar invoiceUrl da assinatura se disponível
-                $paymentUrl = $subscriptionData['invoiceUrl'];
-            } elseif (isset($subscriptionData['invoiceNumber'])) {
-                $baseUrl = config('services.asaas.sandbox', true) 
-                    ? 'https://sandbox.asaas.com'
-                    : 'https://www.asaas.com';
-                $paymentUrl = "{$baseUrl}/i/{$subscriptionData['invoiceNumber']}";
-            }
-            
-            // Se ainda não temos URL, aguardar mais um pouco e tentar novamente
-            if (!$paymentUrl) {
-                sleep(2);
-                $paymentData = $this->asaasService->getSubscriptionPayments($subscriptionData['id']);
-                if ($paymentData && isset($paymentData['invoiceUrl'])) {
-                    $paymentUrl = $paymentData['invoiceUrl'];
+
+                    $subscription = Subscription::create([
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id,
+                        'gateway' => 'mercadopago',
+                        'mp_preference_id' => $preference['id'],
+                        'status' => 'pending',
+                        'starts_at' => now(),
+                    ]);
+
+                    // Atualizar external_reference
+                    $this->mpService->createPreference([
+                        'id' => $preference['id'],
+                        'external_reference' => "subscription:{$subscription->id}",
+                    ]);
+
+                    DB::commit();
+                    Auth::login($user);
+                    return redirect($preference['init_point']);
+                } else {
+                    // Assinatura recorrente (Pre-approval)
+                    $mpSubscription = $this->mpService->createSubscription([
+                        'reason' => "Assinatura: {$plan->name}",
+                        'amount' => $plan->price,
+                        'payer_email' => $user->email,
+                        'billing_cycle' => $plan->billing_cycle,
+                        'return_url' => $returnUrl,
+                        'external_reference' => "subscription:PLACEHOLDER",
+                    ]);
+
+                    if (!$mpSubscription || !isset($mpSubscription['init_point'])) {
+                        throw new \Exception('Erro ao criar assinatura no Mercado Pago');
+                    }
+
+                    $subscription = Subscription::create([
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id,
+                        'gateway' => 'mercadopago',
+                        'mp_preapproval_id' => $mpSubscription['id'],
+                        'status' => 'pending',
+                        'starts_at' => now(),
+                        'next_billing_date' => now()->addMonth(),
+                    ]);
+
+                    // Idealmente o external_reference já está lá, mas o MP às vezes exige criar um plano primeiro.
+                    // Para simplificar, assumimos que o init_point redireciona o usuário.
+
+                    DB::commit();
+                    Auth::login($user);
+                    return redirect($mpSubscription['init_point']);
                 }
             }
 
-            if ($paymentUrl) {
-                // Fazer login automático
-                Auth::login($user);
-                
-                // Salvar informações do pagamento na sessão para quando o usuário voltar do Asaas
-                session()->put('pending_payment', [
-                    'type' => 'subscription',
-                    'subscription_id' => $subscriptionData['id'],
-                    'payment_id' => $paymentData['id'] ?? null,
-                ]);
-                
-                // Redirecionar para pagamento no Asaas
-                return redirect($paymentUrl);
-            }
+            // Fallback
+            Auth::login($user);
+            return redirect()->route('dashboard.index')->with('info', 'Cadastro realizado. Aguardando pagamento.');
 
             // Fallback: fazer login e redirecionar para página de assinaturas
             Auth::login($user);

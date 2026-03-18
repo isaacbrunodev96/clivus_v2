@@ -441,62 +441,46 @@ class DashboardController extends Controller
      */
     private function checkPendingPayments($user)
     {
-        // Verificar módulos pendentes
+        // 1. Verificar módulos pendentes
         $pendingModules = \App\Models\UserModule::where('user_id', $user->id)
             ->where('status', 'inactive')
-            ->whereNotNull('asaas_payment_id')
             ->get();
 
         foreach ($pendingModules as $userModule) {
             try {
-                $payment = app(\App\Services\AsaasService::class)->getPayment($userModule->asaas_payment_id);
-                if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                    $userModule->update(['status' => 'active']);
-                    Log::info('Módulo ativado automaticamente no dashboard', [
-                        'user_module_id' => $userModule->id,
-                        'module_id' => $userModule->module_id,
-                        'payment_id' => $userModule->asaas_payment_id
-                    ]);
+                if ($userModule->gateway === 'asaas' && $userModule->asaas_payment_id) {
+                    $payment = app(\App\Services\AsaasService::class)->getPayment($userModule->asaas_payment_id);
+                    if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
+                        $userModule->update(['status' => 'active']);
+                    }
                 }
+                // Para Mercado Pago, deixamos o Webhook processar
             } catch (\Exception $e) {
-                    Log::warning('Erro ao verificar pagamento de módulo no dashboard', [
-                    'user_module_id' => $userModule->id,
-                    'error' => $e->getMessage()
-                ]);
+                Log::warning('Erro ao verificar módulo no dashboard', ['error' => $e->getMessage()]);
             }
         }
 
-        // Verificar assinaturas pendentes
+        // 2. Verificar assinaturas pendentes
         $pendingSubscriptions = \App\Models\Subscription::where('user_id', $user->id)
             ->where('status', 'pending')
-            ->whereNotNull('asaas_subscription_id')
             ->get();
 
         foreach ($pendingSubscriptions as $subscription) {
             try {
-                $subscriptionData = app(\App\Services\AsaasService::class)->getSubscription($subscription->asaas_subscription_id);
-                if ($subscriptionData && isset($subscriptionData['status']) && $subscriptionData['status'] === 'ACTIVE') {
-                    $subscription->update(['status' => 'active']);
-                    Log::info('Assinatura ativada automaticamente no dashboard', [
-                        'subscription_id' => $subscription->id,
-                        'asaas_subscription_id' => $subscription->asaas_subscription_id
-                    ]);
-                } else {
-                    // Tentar verificar pelos pagamentos da assinatura
-                    $payment = app(\App\Services\AsaasService::class)->getSubscriptionPayments($subscription->asaas_subscription_id);
-                    if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
+                if ($subscription->gateway === 'asaas' && $subscription->asaas_subscription_id) {
+                    $subscriptionData = app(\App\Services\AsaasService::class)->getSubscription($subscription->asaas_subscription_id);
+                    if ($subscriptionData && isset($subscriptionData['status']) && $subscriptionData['status'] === 'ACTIVE') {
                         $subscription->update(['status' => 'active']);
-                        Log::info('Assinatura ativada automaticamente via pagamento no dashboard', [
-                            'subscription_id' => $subscription->id,
-                            'asaas_subscription_id' => $subscription->asaas_subscription_id
-                        ]);
+                    } else {
+                        $payment = app(\App\Services\AsaasService::class)->getSubscriptionPayments($subscription->asaas_subscription_id);
+                        if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
+                            $subscription->update(['status' => 'active']);
+                        }
                     }
                 }
+                // Para Mercado Pago, o webhook de Pre-approval ou IPN ativará a assinatura
             } catch (\Exception $e) {
-                Log::warning('Erro ao verificar assinatura no dashboard', [
-                    'subscription_id' => $subscription->id,
-                    'error' => $e->getMessage()
-                ]);
+                Log::warning('Erro ao verificar assinatura no dashboard', ['error' => $e->getMessage()]);
             }
         }
     }

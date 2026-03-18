@@ -24,7 +24,8 @@ class SyncAsaasSubscriptions extends Command
     {
         $userId = $this->option('user-id');
         
-        $query = Subscription::whereNotNull('asaas_subscription_id');
+        $query = Subscription::where('gateway', 'asaas')
+            ->whereNotNull('asaas_subscription_id');
         
         if ($userId) {
             $query->where('user_id', $userId);

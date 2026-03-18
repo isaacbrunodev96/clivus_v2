@@ -12,10 +12,12 @@ use Illuminate\Support\Facades\DB;
 class SubscriptionController extends Controller
 {
     protected AsaasService $asaasService;
+    protected \App\Services\MercadoPagoService $mpService;
 
-    public function __construct(AsaasService $asaasService)
+    public function __construct(AsaasService $asaasService, \App\Services\MercadoPagoService $mpService)
     {
         $this->asaasService = $asaasService;
+        $this->mpService = $mpService;
     }
 
     public function index(Request $request)
@@ -277,7 +279,22 @@ class SubscriptionController extends Controller
             abort(403);
         }
 
-        if ($this->asaasService->cancelSubscription($subscription->asaas_subscription_id)) {
+        $cancelled = false;
+        
+        if ($subscription->gateway === 'mercadopago') {
+            // Cancelar no Mercado Pago
+            if ($subscription->mp_preapproval_id) {
+                $cancelled = $this->mpService->cancelSubscription($subscription->mp_preapproval_id);
+            } else {
+                // Para Checkout Pro (preference), apenas inativamos localmente
+                $cancelled = true;
+            }
+        } else {
+            // Cancelar no Asaas
+            $cancelled = $this->asaasService->cancelSubscription($subscription->asaas_subscription_id);
+        }
+
+        if ($cancelled) {
             $subscription->update([
                 'status' => 'cancelled',
                 'cancelled_at' => now(),

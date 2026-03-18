@@ -215,21 +215,56 @@
                                 <div class="pt-6 border-t" style="border-color: rgb(var(--border));">
                                     <h3 class="text-xl font-bold mb-6" style="color: rgb(var(--text));">Forma de Pagamento</h3>
                                     
-                                    <div>
-                                        <label for="billing_type" class="block text-sm font-medium mb-2">Método de Pagamento *</label>
-                                        <select id="billing_type" name="billing_type" required
-                                            class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
-                                            style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                                            <option value="">Selecione o método</option>
-                                            <option value="CREDIT_CARD" {{ old('billing_type') == 'CREDIT_CARD' ? 'selected' : '' }}>Cartão de Crédito</option>
-                                            <option value="BOLETO" {{ old('billing_type') == 'BOLETO' ? 'selected' : '' }}>Boleto Bancário</option>
-                                            <option value="PIX" {{ old('billing_type') == 'PIX' ? 'selected' : '' }}>PIX</option>
-                                        </select>
-                                        @error('billing_type')
-                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                        @enderror
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        <div>
+                                            <label for="payment_gateway" class="block text-sm font-medium mb-2">Gateway de Pagamento *</label>
+                                            <select id="payment_gateway" name="payment_gateway" required
+                                                class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+                                                style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
+                                                <option value="asaas" {{ old('payment_gateway', 'asaas') == 'asaas' ? 'selected' : '' }}>Asaas (Boleto, Pix, Cartão)</option>
+                                                <option value="mercadopago" {{ old('payment_gateway') == 'mercadopago' ? 'selected' : '' }}>Mercado Pago (Checkout Pro)</option>
+                                            </select>
+                                            @error('payment_gateway')
+                                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+
+                                        <div>
+                                            <label for="billing_type" class="block text-sm font-medium mb-2">Meio de Pagamento (Asaas) *</label>
+                                            <select id="billing_type" name="billing_type"
+                                                class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
+                                                <option value="CREDIT_CARD" {{ old('billing_type') == 'CREDIT_CARD' ? 'selected' : '' }}>Cartão de Crédito</option>
+                                                <option value="BOLETO" {{ old('billing_type') == 'BOLETO' ? 'selected' : '' }}>Boleto Bancário</option>
+                                                <option value="PIX" {{ old('billing_type', 'PIX') == 'PIX' ? 'selected' : '' }}>PIX</option>
+                                            </select>
+                                            <p class="text-xs mt-1 text-gray-500">Apenas para Asaas. Mercado Pago abrirá o checkout oficial.</p>
+                                            @error('billing_type')
+                                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </div>
                                     </div>
                                 </div>
+
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const gatewaySelect = document.getElementById('payment_gateway');
+                                        const billingTypeSelect = document.getElementById('billing_type');
+
+                                        function toggleBillingType() {
+                                            if (gatewaySelect.value === 'mercadopago') {
+                                                billingTypeSelect.disabled = true;
+                                                billingTypeSelect.required = false;
+                                            } else {
+                                                billingTypeSelect.disabled = false;
+                                                billingTypeSelect.required = true;
+                                            }
+                                        }
+
+                                        gatewaySelect.addEventListener('change', toggleBillingType);
+                                        toggleBillingType();
+                                    });
+                                </script>
 
                                 <div class="flex flex-col sm:flex-row gap-3 pt-4">
                                     <button type="submit" class="flex-1 px-6 py-3 rounded-lg font-medium text-white transition-all hover:scale-105 hover:shadow-lg" style="background: linear-gradient(135deg, rgb(139, 92, 246), rgb(124, 58, 237)); box-shadow: 0 4px 15px -3px rgba(139, 92, 246, 0.4);">

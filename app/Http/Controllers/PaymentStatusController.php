@@ -11,10 +11,12 @@ use Illuminate\Support\Facades\Auth;
 class PaymentStatusController extends Controller
 {
     protected AsaasService $asaasService;
+    protected \App\Services\MercadoPagoService $mpService;
 
-    public function __construct(AsaasService $asaasService)
+    public function __construct(AsaasService $asaasService, \App\Services\MercadoPagoService $mpService)
     {
         $this->asaasService = $asaasService;
+        $this->mpService = $mpService;
     }
 
     /**
@@ -23,141 +25,85 @@ class PaymentStatusController extends Controller
     public function checkStatus(Request $request)
     {
         $user = Auth::user();
-        
-        if (!$user) {
-            return response()->json(['redirect' => route('login')], 302);
-        }
+        if (!$user) return response()->json(['redirect' => route('login')], 302);
 
         $moduleId = $request->query('module');
-        $paymentId = $request->query('payment_id');
-        $subscriptionId = $request->query('subscription_id');
+        $paymentId = $request->query('payment_id'); // Assas payment id
+        $subscriptionId = $request->query('subscription_id'); // Assas subscription id or generic
+        $mpPreferenceId = $request->query('preference_id');
+        $mpPreapprovalId = $request->query('preapproval_id');
 
-        // Verificar pagamento de módulo
+        // 1. Módulos
         if ($moduleId) {
-            // Primeiro tentar com payment_id se fornecido
-            $userModule = null;
-            if ($paymentId) {
-                $userModule = UserModule::where('user_id', $user->id)
-                    ->where('module_id', $moduleId)
-                    ->where('asaas_payment_id', $paymentId)
-                    ->first();
-            }
-            
-            // Se não encontrou, buscar qualquer módulo pendente deste usuário
-            if (!$userModule) {
-                $userModule = UserModule::where('user_id', $user->id)
-                    ->where('module_id', $moduleId)
-                    ->where('status', 'inactive')
-                    ->latest()
-                    ->first();
-                
-                // Se encontrou, usar o payment_id dele
-                if ($userModule && $userModule->asaas_payment_id) {
-                    $paymentId = $userModule->asaas_payment_id;
-                }
-            }
-
-            if ($userModule) {
-                // Se já está ativo, redirecionar
-                if ($userModule->status === 'active') {
-                    if ($request->wantsJson() || $request->ajax()) {
-                        return response()->json(['redirect' => route('dashboard.index') . '?payment=success'], 200);
-                    }
-                    return redirect()->route('dashboard.index')
-                        ->with('success', 'Módulo ativado com sucesso!');
-                }
-
-                // Verificar status no Asaas
-                try {
-                    $payment = $this->asaasService->getPayment($paymentId);
-                    if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                        // Ativar módulo se ainda não estiver ativo
-                        if ($userModule->status === 'inactive') {
-                            $userModule->update(['status' => 'active']);
-                        }
-                        if ($request->wantsJson() || $request->ajax()) {
-                            return response()->json(['redirect' => route('dashboard.index') . '?payment=success'], 200);
-                        }
-                        return redirect()->route('dashboard.index')
-                            ->with('success', 'Módulo ativado com sucesso!');
-                    }
-                } catch (\Exception $e) {
-                    \Log::warning('Erro ao verificar pagamento de módulo', [
-                        'payment_id' => $paymentId,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-        }
-
-        // Verificar pagamento de assinatura
-        if ($subscriptionId) {
-            $subscription = Subscription::where('user_id', $user->id)
-                ->where('asaas_subscription_id', $subscriptionId)
-                ->first();
-        } else {
-            // Se não forneceu subscription_id, buscar assinatura pendente mais recente
-            $subscription = Subscription::where('user_id', $user->id)
-                ->where('status', 'pending')
+            $userModule = UserModule::where('user_id', $user->id)
+                ->where('module_id', $moduleId)
                 ->latest()
                 ->first();
-            
-            if ($subscription) {
-                $subscriptionId = $subscription->asaas_subscription_id;
-            }
-        }
-        
-        if ($subscription) {
 
-            if ($subscription) {
-                // Se já está ativo, redirecionar
-                if ($subscription->status === 'active') {
-                    if ($request->wantsJson() || $request->ajax()) {
-                        return response()->json(['redirect' => route('dashboard.index') . '?payment=success'], 200);
-                    }
-                    return redirect()->route('dashboard.index')
-                        ->with('success', 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!');
+            if ($userModule) {
+                if ($userModule->status === 'active') {
+                    return $this->redirectSuccess($request);
                 }
 
-                // Verificar status no Asaas
                 try {
-                    $subscriptionData = $this->asaasService->getSubscription($subscriptionId);
-                    if ($subscriptionData && isset($subscriptionData['status']) && $subscriptionData['status'] === 'ACTIVE') {
-                        $subscription->update(['status' => 'active']);
-                        if ($request->wantsJson() || $request->ajax()) {
-                            return response()->json(['redirect' => route('dashboard.index') . '?payment=success'], 200);
+                    if ($userModule->gateway === 'mercadopago' && $userModule->mp_payment_id) {
+                        // MP costuma notificar via webhook, mas podemos tentar buscar
+                        // (O MP não tem uma busca fácil por payment_id sem o token de acesso que já temos)
+                        // Para simplificar, deixamos o webhook ativar
+                    } elseif ($userModule->gateway === 'asaas' && $userModule->asaas_payment_id) {
+                        $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
+                        if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
+                            $userModule->update(['status' => 'active']);
+                            return $this->redirectSuccess($request);
                         }
-                        return redirect()->route('dashboard.index')
-                            ->with('success', 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!');
-                    }
-
-                    // Verificar pagamentos da assinatura
-                    $payment = $this->asaasService->getSubscriptionPayments($subscriptionId);
-                    if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                        $subscription->update(['status' => 'active']);
-                        if ($request->wantsJson() || $request->ajax()) {
-                            return response()->json(['redirect' => route('dashboard.index') . '?payment=success'], 200);
-                        }
-                        return redirect()->route('dashboard.index')
-                            ->with('success', 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!');
                     }
                 } catch (\Exception $e) {
-                    \Log::warning('Erro ao verificar assinatura', [
-                        'subscription_id' => $subscriptionId,
-                        'error' => $e->getMessage(),
-                    ]);
+                    \Log::warning('Erro ao verificar pagamento de módulo', ['error' => $e->getMessage()]);
                 }
             }
         }
 
-        // Se não encontrou nada e é requisição AJAX, retornar que ainda está aguardando
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['status' => 'pending'], 200);
+        // 2. Assinaturas
+        $subscription = null;
+        if ($subscriptionId) {
+            $subscription = Subscription::where('user_id', $user->id)
+                ->where(function($q) use ($subscriptionId) {
+                    $q->where('asaas_subscription_id', $subscriptionId)
+                      ->orWhere('mp_preapproval_id', $subscriptionId)
+                      ->orWhere('id', $subscriptionId);
+                })->first();
+        } else {
+            $subscription = Subscription::where('user_id', $user->id)->where('status', 'pending')->latest()->first();
         }
 
-        // Se não encontrou nada, redirecionar para dashboard
-        return redirect()->route('dashboard.index')
-            ->with('info', 'Aguardando confirmação do pagamento. Você será notificado quando for confirmado.');
+        if ($subscription) {
+            if ($subscription->status === 'active') return $this->redirectSuccess($request);
+
+            try {
+                if ($subscription->gateway === 'mercadopago') {
+                    // MP logic
+                } else {
+                    $subscriptionData = $this->asaasService->getSubscription($subscription->asaas_subscription_id);
+                    if ($subscriptionData && isset($subscriptionData['status']) && $subscriptionData['status'] === 'ACTIVE') {
+                        $subscription->update(['status' => 'active']);
+                        return $this->redirectSuccess($request);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Erro ao verificar assinatura', ['error' => $e->getMessage()]);
+            }
+        }
+
+        if ($request->wantsJson() || $request->ajax()) return response()->json(['status' => 'pending'], 200);
+
+        return redirect()->route('dashboard.index')->with('info', 'Aguardando confirmação do pagamento.');
+    }
+
+    private function redirectSuccess($request)
+    {
+        $url = route('dashboard.index') . '?payment=success';
+        if ($request->wantsJson() || $request->ajax()) return response()->json(['redirect' => $url], 200);
+        return redirect($url)->with('success', 'Pagamento confirmado!');
     }
 
     /**
@@ -166,56 +112,23 @@ class PaymentStatusController extends Controller
     public function waiting(Request $request)
     {
         $user = Auth::user();
-        
-        if (!$user) {
-            return redirect()->route('login');
-        }
+        if (!$user) return redirect()->route('login');
 
-        // Obter dados da sessão ou da URL
         $pendingPayment = session()->get('pending_payment');
         
         $moduleId = $request->query('module') ?? $pendingPayment['module_id'] ?? null;
-        $paymentId = $request->query('payment_id') ?? $pendingPayment['payment_id'] ?? null;
         $subscriptionId = $request->query('subscription_id') ?? $pendingPayment['subscription_id'] ?? null;
+        $paymentId = $request->query('payment_id') ?? $pendingPayment['payment_id'] ?? null;
         
-        // Se não temos nenhum ID, tentar buscar automaticamente
-        if (!$moduleId && !$subscriptionId) {
-            // Buscar módulo pendente mais recente
-            $pendingModule = \App\Models\UserModule::where('user_id', $user->id)
-                ->where('status', 'inactive')
-                ->whereNotNull('asaas_payment_id')
-                ->latest()
-                ->first();
-            
-            if ($pendingModule) {
-                $moduleId = $pendingModule->module_id;
-                $paymentId = $pendingModule->asaas_payment_id;
-            } else {
-                // Buscar assinatura pendente mais recente
-                $pendingSubscription = \App\Models\Subscription::where('user_id', $user->id)
-                    ->where('status', 'pending')
-                    ->whereNotNull('asaas_subscription_id')
-                    ->latest()
-                    ->first();
-                
-                if ($pendingSubscription) {
-                    $subscriptionId = $pendingSubscription->asaas_subscription_id;
-                }
-            }
-        }
-        
-        // Limpar sessão após usar
-        if ($pendingPayment) {
-            session()->forget('pending_payment');
-        }
+        if ($pendingPayment) session()->forget('pending_payment');
         
         $redirectUrl = route('payment.status.check', [
             'module' => $moduleId,
-            'payment_id' => $paymentId,
             'subscription_id' => $subscriptionId,
+            'payment_id' => $paymentId,
         ]);
 
-        return view('payment.waiting', compact('redirectUrl', 'moduleId', 'paymentId', 'subscriptionId'));
+        return view('payment.waiting', compact('redirectUrl', 'moduleId', 'subscriptionId'));
     }
 
     /**
@@ -224,95 +137,41 @@ class PaymentStatusController extends Controller
     public function checkPending(Request $request)
     {
         $user = Auth::user();
-        
-        if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        if (!$user) return response()->json(['error' => 'Unauthorized'], 401);
 
         $updated = false;
         $message = null;
-        $type = null; // 'module' ou 'subscription'
 
-        // Verificar módulos pendentes
-        $pendingModules = UserModule::where('user_id', $user->id)
-            ->where('status', 'inactive')
-            ->whereNotNull('asaas_payment_id')
-            ->get();
-
+        // Verificar módulos
+        $pendingModules = UserModule::where('user_id', $user->id)->where('status', 'inactive')->get();
         foreach ($pendingModules as $userModule) {
-            try {
-                $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
-                if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                    if ($userModule->status === 'inactive') {
+            if ($userModule->gateway === 'asaas' && $userModule->asaas_payment_id) {
+                try {
+                    $payment = $this->asaasService->getPayment($userModule->asaas_payment_id);
+                    if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
                         $userModule->update(['status' => 'active']);
                         $updated = true;
                         $message = 'Módulo ativado com sucesso!';
-                        $type = 'module';
-                        
-                        \Log::info('Módulo ativado via polling do dashboard', [
-                            'user_module_id' => $userModule->id,
-                            'module_id' => $userModule->module_id,
-                            'payment_id' => $userModule->asaas_payment_id
-                        ]);
-                        break; // Retornar apenas o primeiro módulo ativado
+                        break;
                     }
-                }
-            } catch (\Exception $e) {
-                \Log::warning('Erro ao verificar pagamento de módulo no polling', [
-                    'user_module_id' => $userModule->id,
-                    'error' => $e->getMessage()
-                ]);
+                } catch (\Exception $e) {}
             }
         }
 
-        // Verificar assinaturas pendentes
-        $pendingSubscriptions = Subscription::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->whereNotNull('asaas_subscription_id')
-            ->get();
-        
-        // Se não encontrou módulo, verificar assinaturas pendentes
+        // Verificar assinaturas
         if (!$updated) {
-
-            foreach ($pendingSubscriptions as $subscription) {
-                try {
-                    $subscriptionData = $this->asaasService->getSubscription($subscription->asaas_subscription_id);
-                    if ($subscriptionData && isset($subscriptionData['status']) && $subscriptionData['status'] === 'ACTIVE') {
-                        if ($subscription->status === 'pending') {
-                            $subscription->update(['status' => 'active']);
+            $pendingSubs = Subscription::where('user_id', $user->id)->where('status', 'pending')->get();
+            foreach ($pendingSubs as $sub) {
+                if ($sub->gateway === 'asaas' && $sub->asaas_subscription_id) {
+                    try {
+                        $data = $this->asaasService->getSubscription($sub->asaas_subscription_id);
+                        if ($data && isset($data['status']) && $data['status'] === 'ACTIVE') {
+                            $sub->update(['status' => 'active']);
                             $updated = true;
-                            $message = 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!';
-                            $type = 'subscription';
-                            
-                            \Log::info('Assinatura ativada via polling do dashboard', [
-                                'subscription_id' => $subscription->id,
-                                'asaas_subscription_id' => $subscription->asaas_subscription_id
-                            ]);
+                            $message = 'Assinatura ativada com sucesso!';
                             break;
                         }
-                    } else {
-                        // Tentar verificar pelos pagamentos da assinatura
-                        $payment = $this->asaasService->getSubscriptionPayments($subscription->asaas_subscription_id);
-                        if ($payment && isset($payment['status']) && $payment['status'] === 'CONFIRMED') {
-                            if ($subscription->status === 'pending') {
-                                $subscription->update(['status' => 'active']);
-                                $updated = true;
-                                $message = 'Assinatura ativada com sucesso! Bem-vindo ao CLIVUS!';
-                                $type = 'subscription';
-                                
-                                \Log::info('Assinatura ativada via pagamento no polling do dashboard', [
-                                    'subscription_id' => $subscription->id,
-                                    'asaas_subscription_id' => $subscription->asaas_subscription_id
-                                ]);
-                                break;
-                            }
-                        }
-                    }
-                } catch (\Exception $e) {
-                    \Log::warning('Erro ao verificar assinatura no polling', [
-                        'subscription_id' => $subscription->id,
-                        'error' => $e->getMessage()
-                    ]);
+                    } catch (\Exception $e) {}
                 }
             }
         }
@@ -320,8 +179,7 @@ class PaymentStatusController extends Controller
         return response()->json([
             'updated' => $updated,
             'message' => $message,
-            'type' => $type,
-            'has_pending' => $pendingModules->count() > 0 || $pendingSubscriptions->count() > 0
+            'has_pending' => $pendingModules->count() > 0 || Subscription::where('user_id', $user->id)->where('status', 'pending')->exists()
         ]);
     }
 }

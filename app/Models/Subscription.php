@@ -10,8 +10,11 @@ class Subscription extends Model
     protected $fillable = [
         'user_id',
         'plan_id',
+        'gateway',
         'asaas_subscription_id',
         'asaas_customer_id',
+        'mp_preapproval_id',
+        'mp_preference_id',
         'status',
         'starts_at',
         'ends_at',

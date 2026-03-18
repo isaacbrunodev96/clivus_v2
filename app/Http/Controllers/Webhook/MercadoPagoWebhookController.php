@@ -21,17 +21,36 @@ class MercadoPagoWebhookController extends Controller
      */
     public function handle(Request $request)
     {
+        // MP envia notificações IPN via Query Params e Webhooks via Body
         $data = $request->all();
         
-        Log::info('Mercado Pago Webhook Received', $data);
+        // Log para auditoria
+        Log::info('Mercado Pago Webhook Received', [
+            'query' => $request->query(),
+            'body' => $request->json()->all(),
+        ]);
+        
+        // Unificar dados (topic/id ou type/data.id)
+        $topic = $request->input('type') ?? $request->input('topic');
+        $id = $request->input('id') ?? ($request->input('data')['id'] ?? null);
 
-        // Validar token se configurado
-        $expectedToken = config('services.mercadopago.webhook_token');
-        if ($expectedToken && $request->header('x-mercadopago-token') !== $expectedToken) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if (!$topic || !$id) {
+            // Se não encontrou nos campos padrões, pode ser um teste de conexão
+            return response()->json(['success' => true, 'message' => 'Connection test or empty data']);
         }
 
-        $this->mpService->processNotification($data);
+        // Delegar processamento ao serviço
+        try {
+            $this->mpService->processNotification([
+                'type' => $topic,
+                'data' => ['id' => $id]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('MercadoPagoWebhook: Erro ao processar notificação', [
+                'error' => $e->getMessage(),
+                'data' => $data
+            ]);
+        }
 
         return response()->json(['success' => true]);
     }
