@@ -216,18 +216,13 @@
                                     <h3 class="text-xl font-bold mb-6" style="color: rgb(var(--text));">Forma de Pagamento</h3>
                                     
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                        <div>
+                                        {{-- Ocultado temporariamente para manter apenas Asaas --}}
+                                        <div class="hidden">
                                             <label for="payment_gateway" class="block text-sm font-medium mb-2">Gateway de Pagamento *</label>
-                                            <select id="payment_gateway" name="payment_gateway" required
-                                                class="w-full px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
-                                                style="background-color: rgb(var(--bg)); border-color: rgb(var(--border)); color: rgb(var(--text)); focus:ring-color: rgb(var(--primary));">
-                                                <option value="asaas" {{ old('payment_gateway', 'asaas') == 'asaas' ? 'selected' : '' }}>Asaas (Boleto, Pix, Cartão)</option>
-                                                <option value="mercadopago" {{ old('payment_gateway') == 'mercadopago' ? 'selected' : '' }}>Mercado Pago (Checkout Pro)</option>
-                                            </select>
-                                            @error('payment_gateway')
-                                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                            @enderror
+                                            <input type="hidden" name="payment_gateway" value="asaas">
                                         </div>
+
+                                        <div class="md:col-span-2">
 
                                         <div>
                                             <label for="billing_type" class="block text-sm font-medium mb-2">Meio de Pagamento (Asaas) *</label>
