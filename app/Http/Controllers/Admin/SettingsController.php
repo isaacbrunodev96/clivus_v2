@@ -17,7 +17,7 @@ class SettingsController extends Controller
     {
         $validated = $request->validate([
             'asaas_api_key' => 'nullable|string',
-            'asaas_sandbox' => 'boolean',
+            'asaas_sandbox' => 'nullable|string', // Checkbox vem como "1" ou null
             'mail_mailer' => 'nullable|string',
             'mail_host' => 'nullable|string',
             'mail_port' => 'nullable|integer',
@@ -31,50 +31,78 @@ class SettingsController extends Controller
             'mercadopago_webhook_token' => 'nullable|string',
         ]);
 
-        // Atualizar configurações do Asaas
-        if (isset($validated['asaas_api_key'])) {
-            $this->updateEnv('ASAAS_API_KEY', $validated['asaas_api_key']);
-        }
-        if (isset($validated['asaas_sandbox'])) {
-            $this->updateEnv('ASAAS_SANDBOX', $validated['asaas_sandbox'] ? 'true' : 'false');
-        }
-
-        // Atualizar configurações de email
-        foreach ($validated as $key => $value) {
-            if (str_starts_with($key, 'mail_') || str_starts_with($key, 'mercadopago_')) {
-                $envKey = strtoupper($key);
-                $this->updateEnv($envKey, $value);
-            }
-        }
-
-        // Limpar cache de configuração para aplicar mudanças
         try {
-            \Illuminate\Support\Facades\Artisan::call('config:clear');
-            \Illuminate\Support\Facades\Artisan::call('config:cache');
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Não foi possível limpar o cache automaticamente: ' . $e->getMessage());
-        }
+            // Atualizar configurações do Asaas
+            if ($request->has('asaas_api_key')) {
+                $this->updateEnv('ASAAS_API_KEY', $validated['asaas_api_key']);
+            }
+            
+            // Checkbox: se não vier no request, é false
+            $sandboxValue = $request->has('asaas_sandbox') ? 'true' : 'false';
+            $this->updateEnv('ASAAS_SANDBOX', $sandboxValue);
 
-        return redirect()->route('admin.settings.index')
-            ->with('success', 'Configurações atualizadas com sucesso!');
+            // Atualizar outras configurações
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'mail_') || str_starts_with($key, 'mercadopago_')) {
+                    if ($value !== null) {
+                        $envKey = strtoupper($key);
+                        $this->updateEnv($envKey, $value);
+                    }
+                }
+            }
+
+            // Limpar cache de configuração para aplicar mudanças
+            if (app()->environment('production')) {
+                \Illuminate\Support\Facades\Artisan::call('config:clear');
+                \Illuminate\Support\Facades\Artisan::call('config:cache');
+            } else {
+                \Illuminate\Support\Facades\Artisan::call('config:clear');
+            }
+
+            return redirect()->route('admin.settings.index')
+                ->with('success', 'Configurações atualizadas com sucesso!');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erro ao salvar configurações: ' . $e->getMessage());
+            return redirect()->route('admin.settings.index')
+                ->with('error', 'Erro ao salvar configurações: ' . $e->getMessage());
+        }
     }
 
     private function updateEnv($key, $value)
     {
         $envFile = base_path('.env');
         if (!file_exists($envFile)) {
+            \Illuminate\Support\Facades\Log::error("SettingsController: .env file not found at $envFile");
             return;
         }
 
-        $env = file_get_contents($envFile);
-        $pattern = "/^{$key}=.*/m";
-        
-        if (preg_match($pattern, $env)) {
-            $env = preg_replace($pattern, "{$key}={$value}", $env);
-        } else {
-            $env .= "\n{$key}={$value}";
+        // Se o valor contiver espaços ou caracteres especiais, envolver em aspas
+        if (preg_match('/\s/', $value) || str_contains($value, '$')) {
+            $value = '"' . str_replace('"', '\"', $value) . '"';
         }
 
-        file_put_contents($envFile, $env);
+        $envContent = file_get_contents($envFile);
+        $lines = explode("\n", $envContent);
+        $found = false;
+
+        foreach ($lines as $i => $line) {
+            if (str_starts_with($line, "{$key}=")) {
+                $lines[$i] = "{$key}={$value}";
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            $lines[] = "{$key}={$value}";
+        }
+
+        $newContent = implode("\n", $lines);
+        
+        if (file_put_contents($envFile, $newContent) === false) {
+            \Illuminate\Support\Facades\Log::error("SettingsController: Failed to write to .env file. Check permissions.");
+            throw new \Exception("Erro ao salvar no arquivo .env. Verifique as permissões de escrita.");
+        }
     }
 }

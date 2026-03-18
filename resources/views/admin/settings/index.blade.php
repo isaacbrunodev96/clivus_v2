@@ -8,6 +8,18 @@
     <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-6">
         @csrf
         @method('PUT')
+        
+        @if(session('success'))
+            <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800" role="alert">
+                <span class="font-medium">Sucesso!</span> {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
+                <span class="font-medium">Erro!</span> {{ session('error') }}
+            </div>
+        @endif
 
         <!-- Configurações do Asaas -->
         <div class="rounded-xl p-6" style="background-color: rgb(var(--card)); border: 1px solid rgb(var(--border)); box-shadow: var(--shadow);">
