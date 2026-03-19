@@ -30,6 +30,19 @@ class ModuleController extends Controller
      */
     public function store(Request $request)
     {
+        // Parse pt-BR price if needed
+        if ($request->has('price')) {
+            $price = $request->price;
+            if (is_string($price) && strpos($price, ',') !== false) {
+                // If contains both dot and comma (e.g. 1.700,00), remove dot first
+                if (strpos($price, '.') !== false) {
+                    $price = str_replace('.', '', $price);
+                }
+                $price = str_replace(',', '.', $price);
+                $request->merge(['price' => $price]);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:modules',
@@ -70,6 +83,19 @@ class ModuleController extends Controller
      */
     public function update(Request $request, Module $module)
     {
+        // Parse pt-BR price if needed
+        if ($request->has('price')) {
+            $price = $request->price;
+            if (is_string($price) && strpos($price, ',') !== false) {
+                // If contains both dot and comma (e.g. 1.700,00), remove dot first
+                if (strpos($price, '.') !== false) {
+                    $price = str_replace('.', '', $price);
+                }
+                $price = str_replace(',', '.', $price);
+                $request->merge(['price' => $price]);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:modules,slug,' . $module->id,
